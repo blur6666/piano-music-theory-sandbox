@@ -2,13 +2,14 @@
 
 ## Project
 
-`index.html` — a single-file, local music theory study tool. An on-screen
-5-octave piano driven by a hardware MIDI keyboard. Shows, live, what the user is
-holding: note names, interval names, chord/scale detection with inversion,
-scale-degree formula, and diatonic chords.
+A local music theory study tool. An on-screen 5-octave piano driven by a
+hardware MIDI keyboard. Shows, live, what the user is holding: note names,
+interval names, chord/scale detection with inversion, scale-degree formula, and
+diatonic chords.
 
 Personal tool for one user studying theory. Not hosted, no build step, no
-dependencies, no framework. Open the file in Chrome/Edge.
+dependencies, no framework. Double-click `index.html` to open it in Chrome/Edge —
+it must keep working straight off the filesystem, with no local server.
 
 ## Hard constraints (do not violate)
 
@@ -22,31 +23,82 @@ dependencies, no framework. Open the file in Chrome/Edge.
 
 ## Architecture
 
-Everything lives in one `<script>` at the bottom of the file.
+```
+index.html     markup shell + script tags, no logic
+style.css      all styling
+tests.html     assertions over theory.js, open it in the browser
+js/
+  data.js         SP.config knobs + all static tables
+  theory.js       detect / diatonic / keyContext — pure, no DOM
+  state.js        the selection Set + subscribe/notify
+  midi.js         Web MIDI hookup, message decoding, console log
+  keyboard-ui.js  builds and repaints the on-screen piano
+  results-ui.js   renders the detection panel
+  main.js         wires everything together
+```
 
-- **Data tables:** `CHORDS` and `SCALES` are arrays of
+**Module system: plain `<script>` tags in dependency order at the end of
+`<body>`, sharing one global namespace object `SP`. NOT ES modules** —
+`import`/`export` doesn't load over `file://` in Chrome, and this tool must open
+by double-clicking, with no server. `data.js` declares `var SP = {}`; every
+other file is an IIFE that attaches to it, so `SP` is the only global. Wrong
+script order fails loudly, which is what you want.
+
+**`main.js` is the only file that runs anything on load.** Everything else just
+defines. This is what keeps `tests.html` able to load `data.js` + `theory.js`
+alone.
+
+### The contract that matters
+
+`SP.state` holds the selection `Set` and a listener list. Inputs (mouse clicks
+in `keyboard-ui.js`, MIDI in `midi.js`) call `set` / `toggle` / `clear`. Views
+(`keyboard-ui.repaint`, `results-ui.render`) `subscribe` and receive the Set.
+**Inputs and views must not reference each other.** A new view — a fretboard,
+a quiz mode — is a new file that subscribes, and nothing else changes. That is
+the point of the whole layout; don't route around it.
+
+Views read the Set they're handed; they never mutate it.
+
+### Where things live
+
+- **Data tables** (`data.js`): `CHORDS` and `SCALES` are arrays of
   `[name, interval-set-string, (scales only) degree-formula]`, intervals in
   semitones from root, e.g. `["minor 7","0,3,7,10"]`. To add a chord or scale,
-  add a row — detection picks it up automatically.
-- **State:** `sel` — a `Set` of held/selected MIDI note numbers. Single source
-  of truth. `press(note, on)` mutates it and repaints.
-- **Keyboard:** built in a loop, MIDI notes 36–96 (C2–C7, 61 keys).
-  White keys labeled; keys positioned by percentage width.
-- **Input, two paths into the same state:**
-  - Mouse click → toggle.
-  - MIDI note-on (0x90 vel>0) → add; note-off (0x80, or 0x90 vel 0) → remove.
-    Momentary: display mirrors what is physically held.
-- **MIDI:** `navigator.requestMIDIAccess()`, listener attached to every input
-  port, re-hooked on `statechange`. All non-note messages ignored for logic but
-  logged to console, decoded human-readable with `HH:MM:SS.mmm` timestamp
-  (`describeMIDI`).
-- **Detection (`detect`):** reduce `sel` to pitch classes, try each candidate
-  root (bass first) against `CHORDS`/`SCALES` interval sets. ≤4 notes prefers
-  chords, ≥5 prefers scales. Chord matches get inversion from the bass note's
-  position in the interval stack.
-- **Diatonic chords (`diatonic`):** for 7-note scales, triads stacked from
-  scale tones; Roman numerals uppercase/lowercase/°/+. For detected major- or
-  minor-family chords, shows the chords of that key with the chord as I.
+  add a row — detection picks it up automatically. `SP.config` holds the key
+  range, initial label visibility, and the MIDI console-logging flag.
+- **Detection** (`theory.detect`): reduce to pitch classes, try each candidate
+  root (bass first) against `CHORDS`/`SCALES`. ≤4 notes prefers chords, ≥5
+  prefers scales. Chord matches get inversion from the bass note's position in
+  the interval stack. Because the bass is tried first, a rotation that is itself
+  in the dictionary wins outright — C-major notes over D is "D dorian mode",
+  not an inversion.
+- **Diatonic chords** (`theory.diatonic`): for 7-note scales, triads stacked
+  from scale tones; Roman numerals uppercase/lowercase/°/+.
+- **Key context** (`theory.keyContext`): decides what chord list to show under a
+  result — diatonic chords for a scale, "chords in the key of X" for a major- or
+  minor-family chord, `null` otherwise. **New key-inference rules go here, not
+  in `results-ui.js`.** The view just renders what it gets back.
+- **Keyboard** (`keyboard-ui.js`): built in a loop over `config.LOW`–`HIGH`
+  (36–96, C2–C7, 61 keys); white-key count is derived, keys positioned by
+  percentage width. `repaint` sets `.active` across every key from the Set —
+  full repaint, no incremental bookkeeping.
+- **MIDI** (`midi.js`): `navigator.requestMIDIAccess()`, listener attached to
+  every input port, re-hooked on `statechange`. Note-on (0x90 vel>0) adds,
+  note-off (0x80, or 0x90 vel 0) removes — momentary, so the display mirrors
+  what is physically held. Non-note messages are ignored for logic but decoded
+  human-readable to the console with an `HH:MM:SS.mmm` timestamp
+  (`describeMIDI`). Its `noteName()` includes an octave number on purpose:
+  console only, and not subject to the display convention above.
+
+## Testing
+
+Open `tests.html` in the browser; it prints a pass/fail tally. Hard-reload
+(Ctrl+Shift+R) — Chrome caches `file://` scripts aggressively and will happily
+serve you the previous version of a `js/` file.
+
+Manual smoke test for anything touching the UI: click C-E-G → "C major — root
+position"; play a scale on the MIDI keyboard → correct name, degrees, chips;
+check console decoding; Clear button; note-labels checkbox.
 
 ## Known limitations (accepted, do not "fix" unless asked)
 
@@ -56,31 +108,23 @@ Everything lives in one `<script>` at the bottom of the file.
 - Pentatonic/blues/whole-tone scales get no diatonic chord chips.
 - One MIDI port at a time on Windows — if the port won't open, close the DAW.
 
-## Planned refactor (approved — execute when asked)
+## Adding things
 
-Full plan in `REFACTOR_PLAN.md` (same folder) — read it before starting.
-Summary of the locked-in decisions:
+The layout exists so that most features are additive. Where the known ideas go:
 
-- **Goal:** a new feature or view becomes a NEW file, not edits to existing
-  ones.
-- **Module system: plain `<script>` tags in dependency order, shared global
-  namespace object `SP`. NOT ES modules** — `import`/`export` doesn't load
-  over `file://` in Chrome and this tool must open by double-clicking the
-  file, with no local server.
-- **Target layout:** `index.html` (shell) + `style.css` + `tests.html` + `js/`
-  with `data.js` (config knobs + all static tables), `theory.js` (pure
-  functions, no DOM), `state.js`, `midi.js`, `keyboard-ui.js`,
-  `results-ui.js`, `main.js`.
-- **The one architectural change:** `SP.state` — the selection `Set` plus
-  subscribe/notify (~15 lines). Inputs (mouse, MIDI) call `state.set()`;
-  views subscribe. Inputs and views must not know about each other.
-  Everything else is cut-and-paste splitting with behavior unchanged, except
-  the key-of logic moving out of `render()` into `theory.keyContext()`.
-- **Phases (commit after each, tool must work after each):**
-  0 git init + doc fixes → 1 extract CSS → 2 split JS into namespace files →
-  3 tests.html → 4 introduce state subscribers → 5 update CLAUDE.md.
-- **Smoke test between phases:** click C-E-G → "C major — root position";
-  MIDI scale → correct name/degrees/chips; console decoding; Clear button.
-- **Out of scope, do not introduce:** npm, bundlers, TypeScript, frameworks,
-  linter config, CI, minification, ES modules, local servers, browsers other
-  than Chrome/Edge.
+- **A new view** (fretboard, staff, quiz): new file in `js/`, a `<script>` tag,
+  and a `SP.state.subscribe(...)` line in `main.js`. Nothing else changes.
+- **A new chord or scale:** one row in `data.js`.
+- **Parent-key chords for pentatonics:** `theory.keyContext` only.
+- **Flat spelling:** a spelling table in `data.js` and a function in
+  `theory.js`; views unchanged.
+
+If a change requires editing three existing files, the layout is being fought —
+stop and reconsider where the logic belongs.
+
+## Out of scope — do not introduce
+
+npm, bundlers, TypeScript, frameworks, linter config, CI, minification, ES
+modules, local servers, browsers other than Chrome/Edge. Check any temptation
+against: does it help one person open one local file and study theory? So far
+nothing on this list does.
