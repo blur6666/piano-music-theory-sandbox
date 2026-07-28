@@ -318,10 +318,6 @@ h1 {
   flex-wrap: wrap;
 }
 
-.scale-picker[hidden] {
-  display: none;
-}
-
 .scale-picker {
   gap: 16px;
   margin: 0 0 1rem;
