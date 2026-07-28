@@ -1,139 +1,183 @@
-# List possible keys for dim/aug/sus/dominant chords
+# Chord degree formulas + suspected root
 
 ## Context
 
-`theory.keyContext()` currently returns `null` for any chord that isn't in
-`MAJOR_FAM`/`MINOR_FAM` — diminished, augmented, sus, and dominant chords get
-no "chords in this key" panel at all, listed as an accepted limitation in
-CLAUDE.md and README. Replacing "no single key" with "list the possible keys,
-one per line" for these chord families.
+The results panel prints a **Degrees** row (`1 2 b3 4 5 b6 b7`) only for scales —
+the formula comes from the third column of each `SCALES` row in `data.js`.
+Chords have no such column, so a detected A minor 7 shows its name, its notes,
+and a chain of successive intervals ("minor 3rd – major 3rd – minor 3rd"), but
+never the formula a student actually reads chords by: `1 b3 5 b7`. Worse, a
+set that matches nothing at all — two notes mid-chord, or an ambiguous
+handful — prints a flat "No match" and gives the player nothing to reason from.
 
-**Fast path found:** `keyContext()` already returns `{label, chords}` where
-`chords` is a list of `{name, rn}` objects that `results-ui.js` renders as
-chips via the existing `renderChips()`. The "possible keys" list can reuse
-that *exact* pipeline — each candidate key becomes one chip (`{name: "C#
-major", rn: "vii°"}`) instead of each diatonic chord. **Only `data.js` and
-`theory.js` change; `results-ui.js`, `index.html`, and CSS are untouched.**
+This change makes the Degrees row universal. Every selection gets a formula:
+from the dictionary when a chord or scale is recognised, and computed against
+the **lowest sounding note as a suspected root** when it isn't. An unmatched
+set stops reading as a failure and starts reading as a hypothesis — `A ?
+(unknown chord)` over `1 b3 b5`.
 
-Each family's candidate keys are small, fixed textbook facts (a semitone
-offset + mode + roman numeral) — not computed, just looked up. All hand-
-verified below against the real music theory before writing them down.
+## Decisions (settled with the user)
 
-## The one judgment call (confirmed with the owner)
+1. **Chord formulas are hand-written**, a third column on each `CHORDS` row,
+   exactly the shape `SCALES` already uses. Textbook spellings: augmented is
+   `1 3 #5` (not `b6`), diminished 7 is `1 b3 b5 bb7` (not `6`), 9th chords
+   read `1 3 5 b7 9` (not `1 2 3 5 b7`). A computed table cannot produce these.
+2. **Unmatched sets read as a chord-style guess** in the Detected line:
+   `A ? (unknown chord)`.
+3. **A single held note shows `Degrees: 1`**; its Detected line stays the plain
+   note name, as today.
 
-Sus chords have no scale-membership answer at all (they're not stacked
-3rds, so they don't sit at a triad degree in any key). Agreed approach:
-treat them as ambiguous between the major and minor triad on the *same*
-root, since suspending the 3rd is exactly what makes that ambiguous. This
-is a different *kind* of answer than the other three rows (a likely
-resolution, not a scale-membership fact) — noted here so it doesn't read as
-inconsistent later.
+## Changes
 
-`7 sus4` is bucketed with sus2/sus4 (same-root major/minor ambiguity) rather
-than treated as a dominant chord, since it's fundamentally a sus shape with
-an added 7th. Not separately confirmed, but it's a direct, visible extension
-of the sus rule above rather than a new one — flagging it here rather than
-deciding it silently.
+### `js/data.js`
 
-## Design
+Add a naive semitone→degree table, used *only* where no dictionary row applies:
 
-**`js/data.js`** — new table, chords with more than one common key:
 ```js
-// [semitone offset from chord root to key tonic, "major"/"minor", roman
-// numeral]. Fixed textbook facts about where each chord shape conventionally
-// sits -- not diatonic-derived, so this is a lookup, not a computation.
-AMBIGUOUS_KEYS: {
-  "diminished":     [[1,"major","vii°"], [-2,"minor","ii°"]],
-  "diminished 7":   [[1,"major","vii°"], [-2,"minor","ii°"]],
-  "minor 7 flat 5": [[1,"major","vii°"], [-2,"minor","ii°"]],
-  "augmented":      [[-3,"minor","III+"]],
-  "dominant 7":     [[5,"major","V"]],
-  "dominant 9":     [[5,"major","V"]],
-  "sus2":           [[0,"major","I"], [0,"minor","i"]],
-  "sus4":           [[0,"major","I"], [0,"minor","i"]],
-  "7 sus4":         [[0,"major","I"], [0,"minor","i"]]
+// Semitone offset from an assumed root -> degree name. Naive: one name per
+// offset, so it can't spell #5 or bb7. Only feeds unmatched sets, where
+// there is no textbook formula to be faithful to anyway.
+DEGREES: ["1","b2","2","b3","3","4","b5","5","b6","6","b7","7"],
+```
+
+Add a third column to all 21 `CHORDS` rows, mirroring `SCALES`:
+
+```js
+["major",            "0,4,7",      "1 3 5"],
+["minor",            "0,3,7",      "1 b3 5"],
+["diminished",       "0,3,6",      "1 b3 b5"],
+["augmented",        "0,4,8",      "1 3 #5"],
+["sus2",             "0,2,7",      "1 2 5"],
+["sus4",             "0,5,7",      "1 4 5"],
+["5 (power chord)",  "0,7",        "1 5"],
+["major 7",          "0,4,7,11",   "1 3 5 7"],
+["dominant 7",       "0,4,7,10",   "1 3 5 b7"],
+["minor 7",          "0,3,7,10",   "1 b3 5 b7"],
+["minor 7 flat 5",   "0,3,6,10",   "1 b3 b5 b7"],
+["diminished 7",     "0,3,6,9",    "1 b3 b5 bb7"],
+["minor major 7",    "0,3,7,11",   "1 b3 5 7"],
+["6",                "0,4,7,9",    "1 3 5 6"],
+["minor 6",          "0,3,7,9",    "1 b3 5 6"],
+["add9",             "0,2,4,7",    "1 3 5 9"],
+["minor add9",       "0,2,3,7",    "1 b3 5 9"],
+["major 9",          "0,2,4,7,11", "1 3 5 7 9"],
+["dominant 9",       "0,2,4,7,10", "1 3 5 b7 9"],
+["minor 9",          "0,2,3,7,10", "1 b3 5 b7 9"],
+["7 sus4",           "0,5,7,10",   "1 4 5 b7"]
+```
+
+Update the header comment: the third column is **display text in stacked-thirds
+order, deliberately not parallel to column 2** — `minor 9` lists `9` last though
+its semitone `2` sorts first. Nothing indexes into it; it is printed whole.
+
+### `js/theory.js`
+
+New pure helper beside `spell`:
+
+```js
+// Degrees of a note set against an assumed root, for sets no dictionary row
+// covers. Sorted by semitone, so no stacked-thirds reordering -- that is what
+// the hand-written columns are for.
+degrees(pcs, root){
+  return pcs.map(p => (p - root + 12) % 12).sort((a, b) => a - b)
+            .map(i => D.DEGREES[i]).join(" ");
+},
+```
+
+In `detect()`:
+
+- On a hit, stamp `degrees: hit[2]` onto the returned result — same rationale as
+  the existing `flats` stamp: the view gets one field to read and cannot pick
+  the wrong column. Chords and scales now both carry it.
+- Replace `return { label: "No match" }` with the suspected-root guess:
+
+```js
+return { label: this.spell(bass, flats) + " ? (unknown chord)",
+         root: bass, degrees: this.degrees(pcs, bass), flats: flats };
+```
+
+  No `hit` on this object, so `keyContext()`'s first line still returns `null` —
+  an unknown set gets no chip panel, unchanged.
+
+### `js/results-ui.js`
+
+Two edits inside `render`, both narrowing this file's job rather than widening
+it — it stops knowing that scales are the thing with degrees:
+
+- Single-note branch (`ordered.length < 2`), before its early return:
+
+```js
+el.degOut.textContent = SP.theory.degrees(pcs, bass);
+el.degRow.style.display = "block";
+```
+
+- Replace the scale-only condition with a check on the stamped field:
+
+```js
+if (r.degrees){
+  el.degOut.textContent = r.degrees.split(" ").join("  ");
+  el.degRow.style.display = "block";
 }
 ```
-Hand-verified against real diatonic triads (not guessed):
-- `diminished`/`+1 major "vii°"`: B° is vii° of C major → offset checks out
-  (chordRoot = keyRoot + 11 ≡ keyRoot − 1, so keyRoot = chordRoot + 1).
-- `diminished`/`−2 minor "ii°"`: B° is also ii° of A natural minor → keyRoot
-  = chordRoot − 2.
-- `augmented`/`−3 minor "III+"`: C+ is III+ of A harmonic minor (same
-  interval math the existing "harmonic minor gives an augmented III" test
-  already exercises with `T.diatonic(0, "0,2,3,5,7,8,11")`) → keyRoot =
-  chordRoot − 3.
-- `dominant 7`/`+5 major "V"`: G is V of C major → keyRoot = chordRoot + 5.
 
-**`js/theory.js`** — `keyContext()` gains one more branch, after the
-MAJOR_FAM/MINOR_FAM checks and before the final `return null`:
-```js
-const keys = D.AMBIGUOUS_KEYS[name];
-if (!keys) return null;
-return {
-  label: "Possible keys",
-  chords: keys.map(([offset, mode, rn]) =>
-    ({ name: this.spell((r.root + offset + 12) % 12, r.flats) + " " + mode, rn: rn }))
-};
-```
-No changes anywhere else — `results-ui.js` already does
-`el.diaLabel.textContent = kc.label; renderChips(kc.chords, 0);` for
-whatever `keyContext()` hands it.
+No `index.html` change: the Degrees row and its label already exist.
 
-## Tests
+> Three source files is the count `CLAUDE.md` says to stop and question. It is
+> the right count here — one row per layer (a table, a derivation, a render),
+> the same shape the flats toggle took — not logic smeared across files. If the
+> implementation starts needing a *fourth*, stop.
 
-Three existing assertions are now **wrong** and must be replaced, not left
-alone — they assert `null` for cases that no longer return `null`:
-```js
-// REMOVE (no longer true):
-eq("dominant 7 has no single key", T.keyContext(T.detect([7,11,2,5], 7)), null);
-eq("sus4 has no single key", T.keyContext(T.detect([0,5,7], 0)), null);
-eq("diminished has no single key", T.keyContext(T.detect([0,3,6], 0)), null);
-```
-Replaced with (all hand-computed against the real algorithm):
-```js
-eq("diminished chord lists both candidate keys",
-   T.keyContext(T.detect([0,3,6], 0)).chords.map(c => c.name + " " + c.rn).join(", "),
-   "C# major vii°, A# minor ii°");
-eq("augmented chord lists its one candidate key",
-   T.keyContext(T.detect([0,4,8], 0)).chords.map(c => c.name + " " + c.rn).join(", "),
-   "A minor III+");
-eq("dominant 7 lists the key it's V of",
-   T.keyContext(T.detect([7,11,2,5], 7)).chords.map(c => c.name + " " + c.rn).join(", "),
-   "C major V");
-eq("sus4 lists the major/minor ambiguity on the same root",
-   T.keyContext(T.detect([0,5,7], 0)).chords.map(c => c.name + " " + c.rn).join(", "),
-   "C major I, C minor i");
-eq("minor 7 flat 5 joins the diminished family",
-   T.keyContext(T.detect([0,3,6,10], 0)).chords.map(c => c.name + " " + c.rn).join(", "),
-   "C# major vii°, A# minor ii°");
-```
-`diminished 7` and `7 sus4` aren't separately asserted (same table rows as
-their siblings above; no new logic path to cover) — kept to five new
-assertions since they'd be redundant. `power chord` and `minor major 7` are
-untouched, still `null`, out of scope per the original ask.
+### `tests.html`
 
-## Docs
+One existing assertion changes: `"unrecognised set falls through"` now expects
+`"C ? (unknown chord)"`. Add, per `CLAUDE.md`'s "a fact about behavior is an
+assertion":
 
-- CLAUDE.md's "Known limitations" bullet on dim/aug/sus/dominant chords gets
-  removed (the limitation is solved); add one line to the `theory.keyContext`
-  bullet in "Where things live" noting the `AMBIGUOUS_KEYS` lookup and that
-  it's fixed facts, not computed.
-- README.md's matching "Known limitations" bullet is removed the same way.
-- Test count: 35 − 3 replaced + 5 new = **37**. Update `README.md`'s count.
+- The user's own example: `T.detect([9,0,4,7], 9).degrees` → `"1 b3 5 b7"`.
+- Hand-written beats naive: `T.detect([0,4,8], 0).degrees` → `"1 3 #5"`, and
+  `T.detect([0,3,6,9], 0).degrees` → `"1 b3 b5 bb7"`.
+- Stacked-thirds order survives: `T.detect([0,2,3,7,10], 0).degrees` →
+  `"1 b3 5 b7 9"`.
+- The A+E partial: `T.detect([9,4], 9).degrees` → `"1 5"`.
+- Unknown set computes: `T.detect([0,1,6], 0).degrees` → `"1 b2 b5"`.
+- **Lowest note is the suspected root**: same set over a different bass,
+  `T.detect([0,1,6], 1).degrees` → `"1 4 7"`.
+- Flats reach the guess: `T.detect([0,1,6], 1, true).label` →
+  `"Db ? (unknown chord)"`.
+- Column guard, so a future chord row can't ship without a formula:
+  `SP.data.CHORDS.every(c => c.length === 3)` → `true`.
+- Unchanged and must stay green: `"no match yields no key context"`.
+
+### `CLAUDE.md`
+
+- "Where things live" → `CHORDS`/`SCALES` are now uniformly
+  `[name, intervals-from-root, degree-formula]`; drop the `(scales)` qualifier.
+- Add `theory.degrees` to the bullet list, noting it serves only unmatched sets
+  while dictionary rows carry their own textbook formula.
+- "Adding things" → a chord row is now three columns, not two.
+
+## Process (per `CLAUDE.md`)
+
+1. Copy this plan to `PLAN.md`, commit it alone, before any code.
+2. Implement; append any forced deviation to a **Deviations** list at its end.
+3. Triage deviations to `CLAUDE.md` / `tests.html` / the commit message, then
+   delete `PLAN.md` in the commit *after* the implementation.
 
 ## Verification
 
-No browser tool available this session. Same proven approach as the flats
-feature:
-1. Run the new assertions against real `data.js` + `theory.js` via Node
-   before touching `tests.html`, to catch any hand-computation slip.
-2. Run the full `tests.html` file itself (all 37) via the document-shim
-   technique used for the flats toggle, confirm "all 37 passed".
-3. Ask the owner to eyeball it in the real browser before committing —
-   this is a display-only change (new chip content under an existing
-   label), so the risk is entirely "does this read clearly", not logic.
-
-## Deviations
-
-(none yet — appended here during implementation if reality forces a change)
+1. **`tests.html`** — open it, expect the tally green with the new assertions.
+   Everything here is pure `data.js` + `theory.js`, so this proves the whole
+   feature except the rendering.
+2. **`index.html` smoke test** — hard-reload (`Ctrl+Shift+R`; a plain reload
+   serves stale `js/` files off `file://`, the documented hour-eating trap):
+   - C-E-G → `C major — root position`, Degrees `1  3  5`
+   - A-C-E-G → `A minor 7 — root position`, Degrees `1  b3  5  b7`
+   - A + E alone → `A 5 (power chord) — root position`, Degrees `1  5`
+   - C + C# + F# → `C ? (unknown chord)`, Degrees `1  b2  b5`
+   - the same three notes rooted on C# → Degrees `1  4  7`
+   - single A → Detected `A`, Degrees `1`
+   - Flats on → the guess respells (`Db ? (unknown chord)`)
+   - Clear → all rows back to `—`, Degrees row hidden
+3. Fully self-validatable (tests + browser smoke test, no hardware), so per
+   `CLAUDE.md` this commits without waiting on the owner. The MIDI path is
+   untouched.
