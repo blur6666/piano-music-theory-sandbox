@@ -65,12 +65,13 @@ h1{font-size:22px;font-weight:500;margin:0 0 0.5rem;}
 .pkey.active{background:var(--accent);border-color:var(--accent);}
 .pkey.active .klabel{color:var(--on-accent);}
 .klabel{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:10px;pointer-events:none;}
-.results{margin-top:1.5rem;}
+.results{margin-top:1.5rem;display:flex;gap:2.5rem;flex-wrap:wrap;}
+.results-col{flex:1 1 260px;min-width:0;}
 .field-label{font-size:13px;color:var(--text-muted);margin:14px 0 4px;}
-.field-label:first-child{margin-top:0;}
+.results-col>.field-label:first-child{margin-top:0;}
 .field-value{font-size:16px;font-weight:500;margin:0;}
 #nameOut{font-size:24px;}
-#stepsOut{font-weight:400;}
+.field-sub{font-size:14px;color:var(--text-secondary);margin:4px 0 0;}
 .chips{display:flex;flex-wrap:wrap;gap:8px;}
 .chip{padding:6px 12px;border-radius:var(--radius);font-size:14px;text-align:center;background:var(--surface-1);}
 .chip .rn{display:block;font-size:11px;color:var(--text-muted);}

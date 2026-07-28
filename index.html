@@ -18,19 +18,22 @@
   </div>
   <div id="kb" class="piano-wrap"></div>
   <div class="results">
-    <p class="field-label">Detected</p>
-    <p id="nameOut" class="field-value">&mdash;</p>
-    <p class="field-label">Notes</p>
-    <p id="notesOut" class="field-value">&mdash;</p>
-    <p class="field-label">Interval pattern</p>
-    <p id="stepsOut" class="field-value">&mdash;</p>
-    <div id="degRow" style="display:none;">
-      <p class="field-label">Degrees</p>
-      <p id="degOut" class="field-value"></p>
+    <div class="results-col">
+      <p class="field-label">Notes</p>
+      <p id="notesOut" class="field-value">&mdash;</p>
+      <div id="degRow" style="display:none;">
+        <p class="field-label">Degrees</p>
+        <p id="degOut" class="field-value"></p>
+      </div>
     </div>
-    <div id="diaRow" style="display:none;">
-      <p id="diaLabel" class="field-label" style="margin-bottom:6px;">Diatonic chords</p>
-      <div id="diaOut" class="chips"></div>
+    <div class="results-col">
+      <p class="field-label">Detected</p>
+      <p id="nameOut" class="field-value">&mdash;</p>
+      <p id="suspectOut" class="field-sub" style="display:none;"></p>
+      <div id="diaRow" style="display:none;">
+        <p id="diaLabel" class="field-label" style="margin-bottom:6px;">Diatonic chords</p>
+        <div id="diaOut" class="chips"></div>
+      </div>
     </div>
   </div>
 </div>

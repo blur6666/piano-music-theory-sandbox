@@ -60,8 +60,8 @@ li .got{display:block;color:var(--text-muted);font-size:13px;}
      T.detect([7,11,2,5], 5).label, "G dominant 7 — 3rd inversion (F in bass)");
   eq("power chord",
      T.detect([0,7], 0).label, "C 5 (power chord) — root position");
-  eq("unrecognised set falls through",
-     T.detect([0,1,6], 0).label, "No match");
+  eq("unrecognised set guesses the bass as suspected root",
+     T.detect([0,1,6], 0).label, "C ? (unknown chord)");
 
   // detect() -- scales. >=5 notes prefers the scale dictionary.
   eq("C major scale",
@@ -78,6 +78,48 @@ li .got{display:block;color:var(--text-muted);font-size:13px;}
      T.detect([0,3,5,7,10], 0).label, "C minor pentatonic");
   eq("scale degree formula comes back on the hit",
      T.detect([0,3,5,7,10], 0).hit[2], "1 b3 4 5 b7");
+
+  // detect() -- degrees. Chords/scales carry their own hand-written formula
+  // (hit[2], stamped as r.degrees); unmatched sets compute one against the
+  // bass as suspected root instead of leaving the player nothing to read.
+  eq("known chord's degrees come from its dictionary row",
+     T.detect([9,0,4,7], 9).degrees, "1 b3 5 b7");
+  eq("hand-written beats naive: augmented spells #5, not b6",
+     T.detect([0,4,8], 0).degrees, "1 3 #5");
+  eq("hand-written beats naive: diminished 7 spells bb7, not 6",
+     T.detect([0,3,6,9], 0).degrees, "1 b3 b5 bb7");
+  eq("stacked-thirds order survives even though 9 sorts first by semitone",
+     T.detect([0,2,3,7,10], 0).degrees, "1 b3 5 b7 9");
+  eq("partial chord (root + 5th only) still gets a formula",
+     T.detect([9,4], 9).degrees, "1 5");
+  eq("unmatched set computes degrees off the bass",
+     T.detect([0,1,6], 0).degrees, "1 b2 b5");
+  eq("lowest note is always the suspected root, not the first pitch class",
+     T.detect([0,1,6], 1).degrees, "1 4 7");
+  eq("flats reach the unknown-chord guess too",
+     T.detect([0,1,6], 1, true).label, "Db ? (unknown chord)");
+  eq("every CHORDS row carries a degree-formula column",
+     SP.data.CHORDS.every(c => c.length === 3), true);
+
+  // suspects() -- chords rooted on the bass that contain everything held,
+  // closest tier only. Root is always the bass, same rule as detect()'s
+  // suspected-root guess.
+  eq("C G B (1 5 7) suspects both 7th chords one note from completing it",
+     T.suspects([0,7,11], 0).map(c => c.name + " +" + c.missing).join(", "),
+     "C major 7 +3, C minor major 7 +b3");
+  eq("C G B does not also suspect C major 9, which is two notes away",
+     T.suspects([0,7,11], 0).some(c => c.name === "C major 9"), false);
+  eq("A + E (1 5) suspects all four equally-close triads",
+     T.suspects([9,4], 9).map(c => c.name).join(", "),
+     "A major, A minor, A sus2, A sus4");
+  eq("A minor's missing note from A + E is the b3",
+     T.suspects([9,4], 9).find(c => c.name === "A minor").missing, "b3");
+  eq("an exact match is never its own suspicion",
+     T.suspects([0,4,7], 0).every(c => c.name !== "C major"), true);
+  eq("nothing suspects a set no chord contains",
+     T.suspects([0,1,6], 0).length, 0);
+  eq("suspects respells with flats",
+     T.suspects([1,8], 1, true)[0].name.startsWith("Db "), true);
 
   // diatonic()
   eq("triads of C major",
@@ -107,16 +149,42 @@ li .got{display:block;color:var(--text-muted);font-size:13px;}
   eq("major-family chord yields that key's triads",
      T.keyContext(T.detect([0,4,7], 0)).chords.map(c => c.name).join(" "),
      "C Dm Em F G Am B°");
-  eq("dominant 7 has no single key",
-     T.keyContext(T.detect([7,11,2,5], 7)), null);
-  eq("sus4 has no single key",
-     T.keyContext(T.detect([0,5,7], 0)), null);
-  eq("diminished has no single key",
-     T.keyContext(T.detect([0,3,6], 0)), null);
   eq("pentatonic gets no chips (not 7 notes)",
      T.keyContext(T.detect([0,3,5,7,10], 0)), null);
   eq("no match yields no key context",
      T.keyContext(T.detect([0,1,6], 0)), null);
+
+  // keyContext() -- dim/aug/sus/dominant chords list candidate keys instead
+  // of picking one. Fixed textbook facts (theory.js's AMBIGUOUS_KEYS), not
+  // computed -- so these are the assertions that catch a mistyped offset.
+  eq("diminished chord lists both candidate keys",
+     T.keyContext(T.detect([0,3,6], 0)).chords.map(c => c.name + " " + c.rn).join(", "),
+     "C# major vii°, A# minor ii°");
+  eq("augmented chord lists its one candidate key",
+     T.keyContext(T.detect([0,4,8], 0)).chords.map(c => c.name + " " + c.rn).join(", "),
+     "A minor III+");
+  eq("dominant 7 lists the key it's V of",
+     T.keyContext(T.detect([7,11,2,5], 7)).chords.map(c => c.name + " " + c.rn).join(", "),
+     "C major V");
+  eq("sus4 lists the major/minor ambiguity on the same root",
+     T.keyContext(T.detect([0,5,7], 0)).chords.map(c => c.name + " " + c.rn).join(", "),
+     "C major I, C minor i");
+  eq("minor 7 flat 5 joins the diminished family",
+     T.keyContext(T.detect([0,3,6,10], 0)).chords.map(c => c.name + " " + c.rn).join(", "),
+     "C# major vii°, A# minor ii°");
+  // activeIdx tells results-ui.js which chip to highlight as "confirmed" --
+  // wrong here once made the first "possible key" look like the answer
+  // (blue) while the second sat in plain grey, though both are just
+  // candidates. Diatonic panels legitimately highlight their tonic; the
+  // ambiguous-keys panel must not highlight anything, 1 candidate or 2.
+  eq("diatonic scale panel highlights the tonic chip",
+     T.keyContext(T.detect([0,2,4,5,7,9,11], 0)).activeIdx, 0);
+  eq("major-family panel highlights the I chip",
+     T.keyContext(T.detect([0,4,7], 0)).activeIdx, 0);
+  eq("possible-keys panel highlights nothing, even with one candidate",
+     T.keyContext(T.detect([7,11,2,5], 7)).activeIdx, -1);
+  eq("possible-keys panel highlights nothing, with two candidates either",
+     T.keyContext(T.detect([0,5,7], 0)).activeIdx, -1);
 
   // Flat spelling. The toggle is a per-pitch-class table swap: theory takes a
   // boolean, never reads a global. Omitting it must keep the old behavior.

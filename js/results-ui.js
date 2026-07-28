@@ -1,7 +1,6 @@
 // Renders the detection panel from the selection Set.
 // All the music reasoning lives in theory.js; this file only displays.
 (function(){
-  const D = SP.data;
   const el = {};   // cached element lookups, filled by init()
   let flats = SP.config.flats;   // mirrors main.js's applyFlats(), like keyboard-ui does for latch
 
@@ -22,7 +21,7 @@
   SP.results = {
 
     init(){
-      ["nameOut","notesOut","stepsOut","degRow","degOut","diaRow","diaLabel","diaOut"]
+      ["nameOut","notesOut","degRow","degOut","suspectOut","diaRow","diaLabel","diaOut"]
         .forEach(id => { el[id] = document.getElementById(id); });
     },
 
@@ -31,11 +30,11 @@
     render(sel){
       const arr = [...sel].sort((a, b) => a - b);
       el.degRow.style.display = "none";
+      el.suspectOut.style.display = "none";
       el.diaRow.style.display = "none";
 
       if (!arr.length){
         el.notesOut.textContent = "—";
-        el.stepsOut.textContent = "—";
         el.nameOut.textContent = "—";
         return;
       }
@@ -46,24 +45,31 @@
       el.notesOut.textContent = ordered.map(i => SP.theory.spell((bass + i) % 12, flats)).join("  ");
 
       if (ordered.length < 2){
-        el.stepsOut.textContent = "—";
         el.nameOut.textContent = SP.theory.spell(bass, flats);
+        el.degOut.textContent = SP.theory.degrees(pcs, bass);
+        el.degRow.style.display = "block";
         return;
       }
-      el.stepsOut.textContent = ordered.slice(1).map((v, i) => D.IV[v - ordered[i]]).join(" – ");
 
       const r = SP.theory.detect(pcs, bass, flats);
       el.nameOut.textContent = r.label;
 
-      if (r.kind === "scale" && r.hit){
-        el.degOut.textContent = r.hit[2].split(" ").join("  ");
+      const sus = (!r.hit || pcs.length < 3) ? SP.theory.suspects(pcs, bass, flats) : [];
+      if (sus.length){
+        el.suspectOut.textContent = "could be: " +
+          sus.map(c => c.name + " (+" + c.missing + ")").join(" · ");
+        el.suspectOut.style.display = "block";
+      }
+
+      if (r.degrees){
+        el.degOut.textContent = r.degrees.split(" ").join("  ");
         el.degRow.style.display = "block";
       }
 
       const kc = SP.theory.keyContext(r);
       if (kc){
         el.diaLabel.textContent = kc.label;
-        renderChips(kc.chords, 0);
+        renderChips(kc.chords, kc.activeIdx);
         el.diaRow.style.display = "block";
       }
     }

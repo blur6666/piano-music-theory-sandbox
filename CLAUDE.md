@@ -1,8 +1,8 @@
 # CLAUDE.md
 
 Local music theory study tool: on-screen 5-octave piano driven by a MIDI
-keyboard, showing live note names, intervals, chord/scale detection with
-inversion, degree formula, and diatonic chords. `README.md` covers usage.
+keyboard, showing live note names, chord/scale detection with inversion,
+degree formula, and diatonic chords. `README.md` covers usage.
 
 ## Hard constraints
 
@@ -45,27 +45,54 @@ else changes. Views read the Set they're handed; they never mutate it.
 
 ### Where things live
 
-- **`data.js`** — `CHORDS`/`SCALES` are `[name, intervals-from-root, (scales)
-  degree-formula]`, e.g. `["minor 7","0,3,7,10"]`. Add a row and detection picks
-  it up. `NAMES`/`FLATS` are parallel pitch-class tables (same index); `NAMES`
-  also doubles as the geometry source in `keyboard-ui.js`, so it never gets
-  swapped for display — use `theory.spell()` instead. `SP.config`: key range,
-  initial label visibility, latch default, flats default, MIDI logging flag.
+- **`data.js`** — `CHORDS`/`SCALES` are both uniformly `[name,
+  intervals-from-root, degree-formula]`, e.g. `["minor 7","0,3,7,10","1 b3 5
+  b7"]`. Add a row and detection picks it up. The formula column is display
+  text in stacked-thirds order, not derived from column 2 — write it by hand.
+  `DEGREES` is the fallback: a naive semitone→degree table (no `#5`/`bb7`) that
+  only feeds `theory.degrees()` for note sets no dictionary row covers.
+  `NAMES`/`FLATS` are parallel pitch-class tables (same index); `NAMES` also
+  doubles as the geometry source in `keyboard-ui.js`, so it never gets swapped
+  for display — use `theory.spell()` instead. `SP.config`: key range, initial
+  label visibility, latch default, flats default, MIDI logging flag.
 - **`theory.spell(pc, flats)`** — the one place that picks `NAMES` or `FLATS`.
   Naive: one name per pitch class, no key context, so it isn't always the
   textbook-correct letter (Gb major's 7th prints "B", not "Cb") — same
   simplicity level the sharps-only default always had, just switchable.
   `detect()` stamps its `flats` arg onto the returned result so `keyContext()`
   re-spells the same way without a second argument to keep in sync.
+- **`theory.degrees(pcs, root)`** — computed degree formula against an
+  assumed root, for note sets no `CHORDS`/`SCALES` row matches. Naive, same
+  spirit as `spell()`: sorted by semitone off `data.DEGREES`, so it can't
+  spell `#5` or `bb7` the way a hand-written dictionary row can.
+- **`theory.suspects(pcs, bass, flats)`** — chords rooted on the bass whose
+  interval set is a superset of what's held, for an incomplete or unmatched
+  selection ("A + E could be A major / A minor / A sus2 / A sus4"). Keeps only
+  the closest tier (fewest missing notes) — a bare 5th doesn't also suggest
+  every 7th chord that happens to contain it. An exact match excludes itself
+  (a chord isn't a suspicion of itself); a set no chord contains at all
+  returns `[]`. Called from `results-ui.js` whenever there's no exact hit, or
+  fewer than 3 notes are held (a dyad never determines a chord even when one
+  interval happens to match — see the power-chord case).
 - **`theory.detect`** — reduce to pitch classes, try each candidate root (bass
   first) against both dictionaries; ≤4 notes prefers chords, ≥5 scales. Bass
   first means a rotation that is itself in the dictionary wins outright: C-major
-  notes over D is "D dorian mode", not an inversion.
+  notes over D is "D dorian mode", not an inversion. A hit stamps `degrees:
+  hit[2]` onto the result (chords and scales both carry that column now); no
+  match still returns a result rather than a dead end — root = bass, label
+  `"<bass> ? (unknown chord)"`, `degrees` computed via `theory.degrees()` — so
+  the player always has an interval formula to read, confirmed or not. No
+  `hit` on that result, so `keyContext()` correctly gives it no chip panel.
 - **`theory.diatonic`** — 7-note scales only; triads stacked from scale tones,
   Roman numerals upper/lower/°/+.
-- **`theory.keyContext`** — picks the chord list under a result (diatonic for a
-  scale, "chords in the key of X" for major/minor-family chords, else `null`).
-  **New key-inference rules go here, not in `results-ui.js`.**
+- **`theory.keyContext`** — picks the chord list under a result: diatonic for
+  a scale, "chords in the key of X" for major/minor-family chords, a
+  **"Possible keys" chip list** for dim/aug/sus/dominant chords (fixed
+  semitone-offset facts in `data.AMBIGUOUS_KEYS`, reusing the same chip
+  renderer with one candidate key per chip instead of one diatonic chord),
+  else `null` (power chord, minor major 7, non-7-note scales — genuinely
+  nothing to show, not an oversight). **New key-inference rules go here, not
+  in `results-ui.js`.**
 - **`keyboard-ui.js`** — loop over `config.LOW`–`HIGH` (36–96, C2–C7, 61 keys);
   white-key count derived, keys positioned by percentage. `repaint` sets
   `.active` across every key from the Set — full repaint, no bookkeeping.
@@ -157,7 +184,6 @@ destinations, no fourth:
   it — key-correct spelling needs letter+accidental math through
   `detect`/`diatonic` plus key inference for results that deliberately have no
   key, and is out of scope.
-- Dim/aug/sus/dominant chords get no "chords in this key" list — no single key.
 - Pentatonic/blues/whole-tone scales get no diatonic chord chips.
 - One MIDI port at a time on Windows — if it won't open, close the DAW.
 
@@ -165,7 +191,8 @@ destinations, no fourth:
 
 Most features are additive: **a new view** (fretboard, staff, quiz) is a new
 `js/` file, a `<script>` tag, and one `SP.state.subscribe(...)` in `main.js`;
-**a chord or scale** is one row in `data.js`; **pentatonic parent keys** are
+**a chord or scale** is one row in `data.js` — name, intervals, and its
+hand-written degree-formula column; **pentatonic parent keys** are
 `theory.keyContext` alone. **Flat spelling** is `data.FLATS` + `theory.spell`,
 plus a boolean mirrored into each view exactly like `latch` — see the toolbar
 button in `main.js` for the pattern to copy for the next such toggle.
