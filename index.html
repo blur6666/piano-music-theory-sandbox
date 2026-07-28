@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scale and chord piano</title>
+<style>
+:root{
+  --surface-0:#faf9f5;
+  --surface-1:#f0eee6;
+  --surface-2:#ffffff;
+  --text-primary:#1a1a17;
+  --text-secondary:#5f5e5a;
+  --text-muted:#888780;
+  --border:#d3d1c7;
+  --border-strong:#b4b2a9;
+  --key-black:#2c2c2a;
+  --key-black-text:#f0eee6;
+  --accent:#185fa5;
+  --accent-bg:#e6f1fb;
+  --accent-text:#0c447c;
+  --on-accent:#ffffff;
+  --radius:8px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --surface-0:#1f1e1b;
+    --surface-1:#2c2b28;
+    --surface-2:#383733;
+    --text-primary:#f0eee6;
+    --text-secondary:#b4b2a9;
+    --text-muted:#888780;
+    --border:#444441;
+    --border-strong:#5f5e5a;
+    --key-black:#141412;
+    --key-black-text:#b4b2a9;
+    --accent:#378add;
+    --accent-bg:#0c447c;
+    --accent-text:#b5d4f4;
+    --on-accent:#ffffff;
+  }
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--surface-0);
+  color:var(--text-primary);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;
+  line-height:1.6;
+}
+.container{max-width:1200px;margin:0 auto;padding:2rem 1.25rem 3rem;}
+h1{font-size:22px;font-weight:500;margin:0 0 0.5rem;}
+.midi-status{font-size:13px;color:var(--text-muted);margin:0 0 1.5rem;}
+.midi-status.ok{color:var(--accent);}
+.toolbar{display:flex;align-items:center;gap:12px;margin:0 0 1rem;}
+.toolbar button{
+  font:inherit;font-size:14px;padding:6px 14px;cursor:pointer;
+  background:transparent;color:var(--text-primary);
+  border:1px solid var(--border-strong);border-radius:var(--radius);
+}
+.toolbar button:hover{background:var(--surface-1);}
+.toolbar button:active{transform:scale(0.98);}
+.toolbar label{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text-secondary);cursor:pointer;}
+.piano-wrap{position:relative;height:160px;user-select:none;}
+.pkey{position:absolute;top:0;cursor:pointer;}
+.pkey.white{height:100%;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:0 0 4px 4px;}
+.pkey.black{height:60%;background:var(--key-black);border:1px solid var(--key-black);border-radius:0 0 3px 3px;z-index:2;}
+.pkey.white .klabel{color:var(--text-secondary);}
+.pkey.black .klabel{color:var(--key-black-text);}
+.pkey.active{background:var(--accent);border-color:var(--accent);}
+.pkey.active .klabel{color:var(--on-accent);}
+.klabel{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:10px;pointer-events:none;}
+.results{margin-top:1.5rem;}
+.field-label{font-size:13px;color:var(--text-muted);margin:14px 0 4px;}
+.field-label:first-child{margin-top:0;}
+.field-value{font-size:16px;font-weight:500;margin:0;}
+#nameOut{font-size:24px;}
+#stepsOut{font-weight:400;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{padding:6px 12px;border-radius:var(--radius);font-size:14px;text-align:center;background:var(--surface-1);}
+.chip .rn{display:block;font-size:11px;color:var(--text-muted);}
+.chip.tonic{background:var(--accent-bg);color:var(--accent-text);font-weight:500;}
+.chip.tonic .rn{color:var(--accent-text);}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Scale and chord piano</h1>
+  <p id="midiStatus" class="midi-status">MIDI: waiting for permission&hellip;</p>
+  <div class="toolbar">
+    <button id="clearBtn">Clear</button>
+    <label><input type="checkbox" id="labelsToggle" checked> Note labels</label>
+  </div>
+  <div id="kb" class="piano-wrap"></div>
+  <div class="results">
+    <p class="field-label">Detected</p>
+    <p id="nameOut" class="field-value">&mdash;</p>
+    <p class="field-label">Notes</p>
+    <p id="notesOut" class="field-value">&mdash;</p>
+    <p class="field-label">Interval pattern</p>
+    <p id="stepsOut" class="field-value">&mdash;</p>
+    <div id="degRow" style="display:none;">
+      <p class="field-label">Degrees</p>
+      <p id="degOut" class="field-value"></p>
+    </div>
+    <div id="diaRow" style="display:none;">
+      <p id="diaLabel" class="field-label" style="margin-bottom:6px;">Diatonic chords</p>
+      <div id="diaOut" class="chips"></div>
+    </div>
+  </div>
+</div>
+<script>
+const NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const IV=["unison","minor 2nd","major 2nd","minor 3rd","major 3rd","perfect 4th","tritone","perfect 5th","minor 6th","major 6th","minor 7th","major 7th","octave"];
+const CHORDS=[["major","0,4,7"],["minor","0,3,7"],["diminished","0,3,6"],["augmented","0,4,8"],["sus2","0,2,7"],["sus4","0,5,7"],["5 (power chord)","0,7"],["major 7","0,4,7,11"],["dominant 7","0,4,7,10"],["minor 7","0,3,7,10"],["minor 7 flat 5","0,3,6,10"],["diminished 7","0,3,6,9"],["minor major 7","0,3,7,11"],["6","0,4,7,9"],["minor 6","0,3,7,9"],["add9","0,2,4,7"],["minor add9","0,2,3,7"],["major 9","0,2,4,7,11"],["dominant 9","0,2,4,7,10"],["minor 9","0,2,3,7,10"],["7 sus4","0,5,7,10"]];
+const SCALES=[["major scale","0,2,4,5,7,9,11","1 2 3 4 5 6 7"],["natural minor scale","0,2,3,5,7,8,10","1 2 b3 4 5 b6 b7"],["harmonic minor scale","0,2,3,5,7,8,11","1 2 b3 4 5 b6 7"],["melodic minor scale","0,2,3,5,7,9,11","1 2 b3 4 5 6 7"],["dorian mode","0,2,3,5,7,9,10","1 2 b3 4 5 6 b7"],["phrygian mode","0,1,3,5,7,8,10","1 b2 b3 4 5 b6 b7"],["lydian mode","0,2,4,6,7,9,11","1 2 3 #4 5 6 7"],["mixolydian mode","0,2,4,5,7,9,10","1 2 3 4 5 6 b7"],["locrian mode","0,1,3,5,6,8,10","1 b2 b3 4 b5 b6 b7"],["major pentatonic","0,2,4,7,9","1 2 3 5 6"],["minor pentatonic","0,3,5,7,10","1 b3 4 5 b7"],["blues scale","0,3,5,6,7,10","1 b3 4 b5 5 b7"],["whole tone scale","0,2,4,6,8,10","1 2 3 #4 #5 b7"],["chromatic scale","0,1,2,3,4,5,6,7,8,9,10,11","1 b2 2 b3 3 4 b5 5 b6 6 b7 7"]];
+const ORD=["root position","1st inversion","2nd inversion","3rd inversion","4th inversion","5th inversion"];
+const ROMAN=["I","II","III","IV","V","VI","VII"];
+const MAJOR_FAM=["major","major 7","6","add9","major 9"];
+const MINOR_FAM=["minor","minor 7","minor 6","minor add9","minor 9"];
+const LOW=36, HIGH=96;
+const kb=document.getElementById("kb");
+const sel=new Set();
+const keyEls={};
+const whiteTotal=36;
+const wW=100/whiteTotal;
+let wIdx=0;
+for(let m=LOW;m<=HIGH;m++){
+  const name=NAMES[m%12], black=name.includes("#");
+  const el=document.createElement("div");
+  el.className="pkey "+(black?"black":"white");
+  if(!black){
+    el.style.width=wW+"%";el.style.left=(wIdx*wW)+"%";
+    wIdx++;
+  }else{
+    el.style.width=(wW*0.62)+"%";el.style.left=(wIdx*wW-wW*0.31)+"%";
+  }
+  const lbl=document.createElement("span");
+  lbl.textContent=name;
+  lbl.className="klabel";
+  el.appendChild(lbl);
+  el.addEventListener("click",()=>{
+    if(sel.has(m)){sel.delete(m);el.classList.remove("active");}
+    else{sel.add(m);el.classList.add("active");}
+    render();
+  });
+  kb.appendChild(el);
+  keyEls[m]=el;
+}
+function press(m,on){
+  if(on)sel.add(m);else sel.delete(m);
+  if(keyEls[m])keyEls[m].classList.toggle("active",on);
+  render();
+}
+const statusEl=document.getElementById("midiStatus");
+if(navigator.requestMIDIAccess){
+  navigator.requestMIDIAccess().then(acc=>{
+    const hook=inp=>{
+      inp.onmidimessage=onMIDI;
+      inp.open().then(
+        ()=>{statusEl.textContent="MIDI: port open \u2014 "+inp.name+" (waiting for notes)";statusEl.classList.add("ok");},
+        ()=>{statusEl.textContent="MIDI: could not open "+inp.name+" \u2014 port busy? Close your DAW / Roland apps and reload";statusEl.classList.remove("ok");}
+      );
+    };
+    acc.inputs.forEach(hook);
+    const names=[...acc.inputs.values()].map(i=>i.name).join(", ");
+    statusEl.textContent=names?"MIDI: connected to "+names:"MIDI: no device found, plug in and reload";
+    statusEl.classList.toggle("ok",!!names);
+    acc.onstatechange=e=>{
+      if(e.port.type==="input"&&e.port.state==="connected"){
+        hook(e.port);
+        statusEl.textContent="MIDI: connected to "+e.port.name;
+        statusEl.classList.add("ok");
+      }
+    };
+  },()=>{statusEl.textContent="MIDI: permission denied";});
+}else{
+  statusEl.textContent="MIDI: not supported in this browser (use Chrome or Edge)";
+}
+const CC_NAMES={1:"mod wheel",7:"volume",10:"pan",11:"expression",64:"sustain pedal",120:"all sound off",121:"reset controllers",123:"all notes off"};
+function noteName(n){return NAMES[n%12]+(Math.floor(n/12)-1);}
+function describeMIDI(d){
+  const st=d[0], cmd=st&0xF0, ch=(st&0x0F)+1;
+  if(st===0xF8)return"Clock";
+  if(st===0xFE)return"Active Sensing";
+  if(st===0xFA)return"Start";
+  if(st===0xFB)return"Continue";
+  if(st===0xFC)return"Stop";
+  if(st===0xF0)return"SysEx ("+d.length+" bytes)";
+  if(cmd===0x90&&d[2]>0)return"Note On  ch"+ch+"  "+noteName(d[1])+"  vel "+d[2];
+  if(cmd===0x80||(cmd===0x90&&d[2]===0))return"Note Off ch"+ch+"  "+noteName(d[1]);
+  if(cmd===0xA0)return"Poly Aftertouch ch"+ch+"  "+noteName(d[1])+"  "+d[2];
+  if(cmd===0xB0)return"Control Change ch"+ch+"  CC"+d[1]+(CC_NAMES[d[1]]?" ("+CC_NAMES[d[1]]+")":"")+" = "+d[2];
+  if(cmd===0xC0)return"Program Change ch"+ch+"  program "+d[1];
+  if(cmd===0xD0)return"Channel Aftertouch ch"+ch+"  "+d[1];
+  if(cmd===0xE0)return"Pitch Bend ch"+ch+"  "+(((d[2]<<7)|d[1])-8192);
+  return"Unknown";
+}
+function onMIDI(e){
+  const t=new Date(), pad=(n,w)=>String(n).padStart(w,"0");
+  const ts=pad(t.getHours(),2)+":"+pad(t.getMinutes(),2)+":"+pad(t.getSeconds(),2)+"."+pad(t.getMilliseconds(),3);
+  console.log(ts+"  "+describeMIDI(e.data)+"   ["+[...e.data].map(b=>"0x"+b.toString(16).padStart(2,"0")).join(" ")+"]");
+  const st=e.data[0], note=e.data[1], vel=e.data[2];
+  const cmd=st&0xF0;
+  if(cmd===0x90&&vel>0)press(note,true);
+  else if(cmd===0x80||(cmd===0x90&&vel===0))press(note,false);
+}
+function diatonic(root,ivStr){
+  const iv=ivStr.split(",").map(Number);
+  if(iv.length!==7)return null;
+  return iv.map((t0,i)=>{
+    const t1=iv[(i+2)%7]+((i+2)>=7?12:0);
+    const t2=iv[(i+4)%7]+((i+4)>=7?12:0);
+    const a=t1-t0,b=t2-t0;
+    let suf="",rn=ROMAN[i];
+    if(a===4&&b===7){suf="";}
+    else if(a===3&&b===7){suf="m";rn=rn.toLowerCase();}
+    else if(a===3&&b===6){suf="\u00B0";rn=rn.toLowerCase()+"\u00B0";}
+    else if(a===4&&b===8){suf="+";rn=rn+"+";}
+    else{suf="?";}
+    return{name:NAMES[(root+t0)%12]+suf,rn:rn};
+  });
+}
+function detect(pcs,bass){
+  const n=pcs.length;
+  const dicts=n<=4?[["chord",CHORDS],["scale",SCALES]]:[["scale",SCALES],["chord",CHORDS]];
+  const roots=[bass,...pcs.filter(p=>p!==bass)];
+  for(const[kind,dict]of dicts){
+    for(const root of roots){
+      const ivArr=pcs.map(p=>(p-root+12)%12).sort((a,b)=>a-b);
+      const hit=dict.find(d=>d[1]===ivArr.join(","));
+      if(hit){
+        let label=NAMES[root]+" "+hit[0];
+        if(kind==="chord"){
+          const pos=ivArr.indexOf((bass-root+12)%12);
+          label+=" \u2014 "+(ORD[pos]||pos+"th inversion");
+          if(pos>0)label+=" ("+NAMES[bass]+" in bass)";
+        }else if(root!==bass){
+          label+=" ("+NAMES[bass]+" in bass)";
+        }
+        return{label:label,kind:kind,root:root,hit:hit};
+      }
+    }
+  }
+  return{label:"No match"};
+}
+function renderChips(list,activeIdx){
+  const out=document.getElementById("diaOut");
+  out.innerHTML="";
+  list.forEach((c,i)=>{
+    const chip=document.createElement("div");
+    chip.className="chip"+(i===activeIdx?" tonic":"");
+    const rn=document.createElement("span");
+    rn.className="rn";rn.textContent=c.rn;
+    chip.appendChild(rn);
+    chip.appendChild(document.createTextNode(c.name));
+    out.appendChild(chip);
+  });
+}
+function render(){
+  const arr=[...sel].sort((a,b)=>a-b);
+  const notesOut=document.getElementById("notesOut");
+  const stepsOut=document.getElementById("stepsOut");
+  const nameOut=document.getElementById("nameOut");
+  const degRow=document.getElementById("degRow");
+  const diaRow=document.getElementById("diaRow");
+  const diaLabel=document.getElementById("diaLabel");
+  degRow.style.display="none";diaRow.style.display="none";
+  if(!arr.length){notesOut.textContent="\u2014";stepsOut.textContent="\u2014";nameOut.textContent="\u2014";return;}
+  const bass=arr[0]%12;
+  const pcs=[...new Set(arr.map(m=>m%12))];
+  const ordered=pcs.map(p=>(p-bass+12)%12).sort((a,b)=>a-b);
+  notesOut.textContent=ordered.map(i=>NAMES[(bass+i)%12]).join("  ");
+  if(ordered.length<2){stepsOut.textContent="\u2014";nameOut.textContent=NAMES[bass];return;}
+  stepsOut.textContent=ordered.slice(1).map((v,i)=>IV[v-ordered[i]]).join(" \u2013 ");
+  const r=detect(pcs,bass);
+  nameOut.textContent=r.label;
+  if(!r.hit)return;
+  if(r.kind==="scale"){
+    document.getElementById("degOut").textContent=r.hit[2].split(" ").join("  ");
+    degRow.style.display="block";
+    const dia=diatonic(r.root,r.hit[1]);
+    if(dia){diaLabel.textContent="Diatonic chords";renderChips(dia,0);diaRow.style.display="block";}
+  }else{
+    let keyIv=null,keyName="";
+    if(MAJOR_FAM.includes(r.hit[0])){keyIv="0,2,4,5,7,9,11";keyName="major";}
+    else if(MINOR_FAM.includes(r.hit[0])){keyIv="0,2,3,5,7,8,10";keyName="minor";}
+    if(keyIv){
+      diaLabel.textContent="Chords in the key of "+NAMES[r.root]+" "+keyName+" (this chord as I)";
+      renderChips(diatonic(r.root,keyIv),0);
+      diaRow.style.display="block";
+    }
+  }
+}
+document.getElementById("clearBtn").addEventListener("click",()=>{
+  sel.clear();
+  Object.values(keyEls).forEach(el=>el.classList.remove("active"));
+  render();
+});
+document.getElementById("labelsToggle").addEventListener("change",e=>{
+  document.querySelectorAll(".klabel").forEach(l=>l.style.display=e.target.checked?"block":"none");
+});
+</script>
+</body>
+</html>
