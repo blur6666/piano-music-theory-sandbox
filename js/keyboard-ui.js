@@ -2,6 +2,22 @@
 (function(){
   const C = SP.config, D = SP.data;
   const keyEls = {};   // MIDI note number -> key element
+  const mouseHeld = new Set();   // notes currently down via mouse, momentary mode only
+  let latch = C.latch;   // mirrors SP.midi's flag; kept in sync by main.js's applyLatch()
+
+  function press(m){
+    if (latch) SP.state.toggle(m);
+    else { mouseHeld.add(m); SP.state.set(m, true); }
+  }
+
+  // Bound to window, not the key, so a release anywhere on the page --
+  // cursor drifted off the key, or off the page entirely -- still clears
+  // it. Otherwise a stray release could strand a note on.
+  function releaseHeld(){
+    if (latch) return;
+    for (const m of mouseHeld) SP.state.set(m, false);
+    mouseHeld.clear();
+  }
 
   SP.keyboard = {
 
@@ -28,10 +44,11 @@
         lbl.textContent = name;
         lbl.className = "klabel";
         el.appendChild(lbl);
-        el.addEventListener("click", () => SP.state.toggle(m));
+        el.addEventListener("mousedown", () => press(m));
         kb.appendChild(el);
         keyEls[m] = el;
       }
+      window.addEventListener("mouseup", releaseHeld);
       this.setLabels(C.showLabels);
     },
 
@@ -43,6 +60,10 @@
 
     setLabels(on){
       for (const m in keyEls) keyEls[m].firstChild.style.display = on ? "block" : "none";
-    }
+    },
+
+    // Called by main.js's applyLatch() alongside SP.midi.setLatch(), so both
+    // input paths always agree on the current mode.
+    setLatch(on){ latch = on; }
   };
 })();

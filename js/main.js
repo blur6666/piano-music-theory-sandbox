@@ -13,6 +13,7 @@
   let latchOn = SP.config.latch;
   function applyLatch(){
     SP.midi.setLatch(latchOn);
+    SP.keyboard.setLatch(latchOn);
     latchBtn.classList.toggle("on", latchOn);
     latchBtn.textContent = "Latch: " + (latchOn ? "on" : "off");
   }

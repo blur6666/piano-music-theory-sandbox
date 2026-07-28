@@ -39,8 +39,8 @@
     const on  = cmd === 0x90 && vel > 0;
     const off = cmd === 0x80 || (cmd === 0x90 && vel === 0);
     // Latched: note-on flips the key and note-off is ignored, so a scale can
-    // be tapped in one note at a time instead of held down -- the same
-    // behavior mouse clicks already have.
+    // be tapped in one note at a time instead of held down. Mouse input honors
+    // the same flag (see keyboard-ui.js) -- kept in sync by main.js.
     // Momentary: the display mirrors what is physically held.
     if (latch){ if (on) SP.state.toggle(note); }
     else if (on) SP.state.set(note, true);

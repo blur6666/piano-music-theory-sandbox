@@ -18,10 +18,10 @@ if the port won't open, close the DAW (Windows gives one app the port at a time)
 | Control | What it does |
 | --- | --- |
 | **MIDI keyboard** | Momentary by default — the display mirrors what's physically held |
-| **Latch** | Note-on toggles the key and note-off is ignored, so a scale can be tapped in one note at a time instead of held. Off on load. |
+| **Mouse** | Follows the same mode as MIDI: press-and-hold when momentary, click-to-toggle when latched |
+| **Latch** | Note-on (or mouse press) toggles the key instead of holding it, so a scale can be tapped in one note at a time. Off on load. |
 | **Clear** | Empties the selection, latched notes included |
 | **Note labels** | Shows/hides the note name on each key |
-| **Mouse** | Clicking a key always toggles it, in either mode |
 
 ## Testing
 

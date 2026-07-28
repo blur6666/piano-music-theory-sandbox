@@ -61,19 +61,23 @@ else changes. Views read the Set they're handed; they never mutate it.
 - **`keyboard-ui.js`** — loop over `config.LOW`–`HIGH` (36–96, C2–C7, 61 keys);
   white-key count derived, keys positioned by percentage. `repaint` sets
   `.active` across every key from the Set — full repaint, no bookkeeping.
+  Mouse honors the same latch flag as MIDI (own `setLatch`, kept in sync by
+  `main.js`'s `applyLatch`): momentary presses add on `mousedown` and release on
+  the next `mouseup` **anywhere on the page**, so a cursor that drifts off the
+  key before release can't strand a note on; latched presses toggle.
 - **`midi.js`** — listener on every input port, re-hooked on `statechange`.
   Note-on adds / note-off removes (momentary). **Latch** (`config.latch`, off by
-  default) instead toggles on note-on and ignores note-off, matching what mouse
-  clicks already do; switching modes deliberately leaves lit notes alone.
-  Non-note messages are console-decoded with a timestamp (`describeMIDI`); its
-  `noteName()` includes an octave on purpose — console only, exempt from the
-  display convention.
+  default) instead toggles on note-on and ignores note-off. Both input paths
+  share one latch flag, mirrored into each module by `main.js`; switching modes
+  deliberately leaves lit notes alone. Non-note messages are console-decoded
+  with a timestamp (`describeMIDI`); its `noteName()` includes an octave on
+  purpose — console only, exempt from the display convention.
 
 ## Testing
 
 Open `tests.html`; it prints a pass/fail tally. Smoke test for UI changes: click
 C-E-G → "C major — root position"; play a scale → name, degrees, chips; console
-decoding; Clear; Latch; note-labels.
+decoding; Clear; Latch **via both mouse and MIDI**; note-labels.
 
 The whole MIDI input path runs from the console, no hardware needed:
 
