@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>scale-piano tests</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.container{max-width:720px;}
+#tally{font-size:20px;font-weight:500;margin:0 0 1rem;}
+#tally.ok{color:var(--accent);}
+#tally.bad{color:#c0392b;}
+ol{margin:0;padding-left:1.5rem;}
+li{margin:2px 0;font-size:14px;}
+li.fail{color:#c0392b;font-weight:500;}
+li .got{display:block;color:var(--text-muted);font-size:13px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>scale-piano tests</h1>
+  <p class="midi-status">Loads <code>data.js</code> + <code>theory.js</code> only &mdash; no DOM, no state, no MIDI.</p>
+  <p id="tally">running&hellip;</p>
+  <ol id="results"></ol>
+</div>
+<script src="js/data.js"></script>
+<script src="js/theory.js"></script>
+<script>
+(function(){
+  const T = SP.theory;
+  let pass = 0, fail = 0;
+  const list = document.getElementById("results");
+
+  function eq(label, actual, expected){
+    const ok = actual === expected;
+    ok ? pass++ : fail++;
+    const li = document.createElement("li");
+    li.className = ok ? "" : "fail";
+    li.textContent = (ok ? "ok   " : "FAIL ") + label;
+    if (!ok){
+      const got = document.createElement("span");
+      got.className = "got";
+      got.textContent = "expected " + JSON.stringify(expected) + ", got " + JSON.stringify(actual);
+      li.appendChild(got);
+    }
+    list.appendChild(li);
+  }
+
+  // detect() -- chords. Args are (pitch classes, bass pitch class).
+  eq("C major triad, root position",
+     T.detect([0,4,7], 0).label, "C major — root position");
+  eq("C major triad, E in bass",
+     T.detect([0,4,7], 4).label, "C major — 1st inversion (E in bass)");
+  eq("C major triad, G in bass",
+     T.detect([0,4,7], 7).label, "C major — 2nd inversion (G in bass)");
+  eq("A minor triad",
+     T.detect([9,0,4], 9).label, "A minor — root position");
+  eq("Cmaj7",
+     T.detect([0,4,7,11], 0).label, "C major 7 — root position");
+  eq("G7 with F in bass (3rd inversion)",
+     T.detect([7,11,2,5], 5).label, "G dominant 7 — 3rd inversion (F in bass)");
+  eq("power chord",
+     T.detect([0,7], 0).label, "C 5 (power chord) — root position");
+  eq("unrecognised set falls through",
+     T.detect([0,1,6], 0).label, "No match");
+
+  // detect() -- scales. >=5 notes prefers the scale dictionary.
+  eq("C major scale",
+     T.detect([0,2,4,5,7,9,11], 0).label, "C major scale");
+  // Bass is tried as the root first, so a rotation that is itself in the
+  // dictionary wins outright rather than being called an inversion.
+  eq("C major collection over D is dorian, not C major",
+     T.detect([0,2,4,5,7,9,11], 2).label, "D dorian mode");
+  // The "(x in bass)" fallback only fires when the rotation is NOT in the
+  // dictionary -- harmonic minor's modes aren't.
+  eq("harmonic minor over its 2nd degree reports the bass",
+     T.detect([0,2,3,5,7,8,11], 2).label, "C harmonic minor scale (D in bass)");
+  eq("C minor pentatonic",
+     T.detect([0,3,5,7,10], 0).label, "C minor pentatonic");
+  eq("scale degree formula comes back on the hit",
+     T.detect([0,3,5,7,10], 0).hit[2], "1 b3 4 5 b7");
+
+  // diatonic()
+  eq("triads of C major",
+     T.diatonic(0, SP.data.MAJOR_IV).map(c => c.name).join(" "),
+     "C Dm Em F G Am B°");
+  eq("roman numerals of C major",
+     T.diatonic(0, SP.data.MAJOR_IV).map(c => c.rn).join(" "),
+     "I ii iii IV V vi vii°");
+  eq("triads of A natural minor",
+     T.diatonic(9, SP.data.MINOR_IV).map(c => c.name).join(" "),
+     "Am B° C Dm Em F G");
+  eq("harmonic minor gives an augmented III",
+     T.diatonic(0, "0,2,3,5,7,8,11").map(c => c.rn).join(" "),
+     "i ii° III+ iv V VI vii°");
+  eq("non-7-note scale has no diatonic triads",
+     T.diatonic(0, "0,2,4,7,9"), null);
+
+  // keyContext() -- the logic that used to live inside render().
+  eq("scale gets the plain diatonic label",
+     T.keyContext(T.detect([0,2,4,5,7,9,11], 0)).label, "Diatonic chords");
+  eq("major-family chord names its key",
+     T.keyContext(T.detect([0,4,7,11], 0)).label,
+     "Chords in the key of C major (this chord as I)");
+  eq("minor-family chord names its key",
+     T.keyContext(T.detect([9,0,4], 9)).label,
+     "Chords in the key of A minor (this chord as I)");
+  eq("major-family chord yields that key's triads",
+     T.keyContext(T.detect([0,4,7], 0)).chords.map(c => c.name).join(" "),
+     "C Dm Em F G Am B°");
+  eq("dominant 7 has no single key",
+     T.keyContext(T.detect([7,11,2,5], 7)), null);
+  eq("sus4 has no single key",
+     T.keyContext(T.detect([0,5,7], 0)), null);
+  eq("diminished has no single key",
+     T.keyContext(T.detect([0,3,6], 0)), null);
+  eq("pentatonic gets no chips (not 7 notes)",
+     T.keyContext(T.detect([0,3,5,7,10], 0)), null);
+  eq("no match yields no key context",
+     T.keyContext(T.detect([0,1,6], 0)), null);
+
+  const tally = document.getElementById("tally");
+  tally.textContent = fail ? fail + " failed, " + pass + " passed" : "all " + pass + " passed";
+  tally.className = fail ? "bad" : "ok";
+})();
+</script>
+</body>
+</html>
