@@ -143,27 +143,19 @@ an older version; edits that "don't take" while others in the same commit did.
 3. Confirm what actually loaded before suspecting logic — `typeof
    SP.midi.setLatch`, or spy on a handler, rather than inferring from the UI.
 
-## Process for a change of any size
+## Where knowledge goes
 
-1. Write `PLAN.md` — always that filename — and commit it alone, before code.
-2. Implement, appending any forced deviation to a **Deviations** list at its end.
-3. Closing commit: triage every deviation to a permanent home (below), then
-   delete `PLAN.md` — in the commit *after* the implementation, so the
-   implementation diff isn't buried under a doc deletion.
-
-One filename means retrieving any past plan needs no memory:
-`git log --follow --patch -- PLAN.md`
-
-**Where knowledge goes.** The Deviations list is a staging area — `PLAN.md` is
-about to be deleted, so anything left in it is lost. Write it down anyway: long
-sessions get summarized and the "huh, surprising" detail goes first. Three
-destinations, no fourth:
+When a change turns up something that wasn't obvious going in — a constraint
+that forced a different approach, a behavior nobody would guess from the code —
+route it before the session ends. Long sessions get summarized and the "huh,
+surprising" detail is the first thing to evaporate. Three destinations, no
+fourth:
 
 - **A rule that must not be rediscovered** → this file (the cache trap above).
 - **A fact about behavior** → an assertion in `tests.html`. Executable, can't go
   stale like prose. "Bass tried first, so C-major over D is D dorian" is a test.
 - **A one-off explaining this diff's shape** → the commit message. Git greps
-  those; it does not grep deleted files.
+  those.
 
 ## When to commit
 
