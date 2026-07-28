@@ -4,9 +4,9 @@ Local music theory study tool: on-screen 5-octave piano driven by a MIDI keyboar
 
 ## Hard constraints
 
-- **KISS.** No support beyond the owner's use case — no resilience, no graceful degradation, no edge-case armor. He tinkers and fixes breakage himself.
-- **No audio.** Silent by design.
-- **Must open by double-clicking `index.html`** off the filesystem in Chrome/Edge. No server, no build step, no dependencies.
+- **KISS.** No support beyond the owner's use case: Desktop Windows PC. No resilience, no graceful degradation, no edge-case armor. He tinkers and fixes breakage himself.
+- **No audio.** Silent by design. But might be added later (lol)
+- **Must open by double-clicking `index.html`** off the filesystem in Chrome. No server, no build step, no dependencies.
 - **Display conventions** (user-specified): note names without octave numbers, deduplicated to pitch classes; intervals as proper names ("major 3rd"), never W/H or semitone counts; chords show inversion text.
 
 ## Architecture
@@ -75,14 +75,9 @@ When a change turns up something that wasn't obvious going in — a constraint t
 - **A fact about behavior** → an assertion in `tests.html`. Executable, can't go stale like prose. "Bass tried first, so C-major over D is D dorian" is a test.
 - **A one-off explaining this diff's shape** → the commit message. Git greps those.
 
-## When to commit
-
-- **Validation needs the owner → don't commit.** Implement, report, wait. Here that means anything whose real proof is the MIDI keyboard: the browser can drive `onMIDI` and prove the logic, never the hardware. Latch mode was committed before that check came back; it passed, but the commit was a guess.
-- **You can fully validate it → commit without asking.** Passing tests, a browser smoke test, a doc edit. Don't manufacture check-ins for proven work.
-
 ## Known limitations (accepted, do not "fix" unless asked)
 
-- **Flats toggle is a per-pitch-class table swap, not key-aware spelling.** With flats on, every accidental takes its flat name (D#→Eb) from one table indexed by pitch class. Nothing computes a correct letter per scale degree, so Gb major prints its 7th as B (not Cb) and a scale can repeat or skip letters. This is parity with the sharps-only default, not a regression from it — key-correct spelling needs letter+accidental math through `detect`/`diatonic` plus key inference for results that deliberately have no key, and is out of scope.
+- Flats toggle is a per-pitch-class table swap, not key-aware spelling. With flats on, every accidental takes its flat name (D#→Eb) from one table indexed by pitch class. Nothing computes a correct letter per scale degree, so Gb major prints its 7th as B (not Cb) and a scale can repeat or skip letters. This is parity with the sharps-only default, not a regression from it — key-correct spelling needs letter+accidental math through `detect`/`diatonic` plus key inference for results that deliberately have no key, and is out of scope.
 - Pentatonic/blues/whole-tone scales get no diatonic chord chips.
 - One MIDI port at a time on Windows — if it won't open, close the DAW.
 
