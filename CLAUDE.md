@@ -138,6 +138,39 @@ the same commit clearly did.
 
 **Suspect the cache before the code.**
 
+## Process for a change of any size
+
+1. Write `PLAN.md` — always that filename — and commit it alone, before code.
+2. Implement. When reality forces a deviation, append it to a **Deviations**
+   list at the end of `PLAN.md` as you go.
+3. Closing commit: triage every deviation to its permanent home (below), then
+   delete `PLAN.md`. Delete it in the commit *after* the implementation, so the
+   implementation diff isn't buried under a large doc deletion.
+
+Always the same filename, so retrieving any past plan is one command and
+requires remembering nothing:
+
+```
+git log --follow --patch -- PLAN.md
+```
+
+### Where knowledge actually goes
+
+The Deviations list is a staging area, not a destination — `PLAN.md` is about
+to be deleted, so anything left in it is lost. There is no fourth place:
+
+- **A rule that must not be rediscovered** → this file. The `file://` cache
+  trap is the model: it cost an hour once and will not cost it again.
+- **A fact about behavior** → an assertion in `tests.html`. Executable, and it
+  cannot go stale the way prose does. "Bass is tried as root first, so C-major
+  notes over D is D dorian" is a test, not a paragraph.
+- **A one-off explaining only this diff's shape** → the commit message. Git
+  greps commit messages; it does not grep deleted files. Put the *why* of a
+  decision here even when the plan already explained it.
+
+Why bother writing the list down rather than just remembering: long sessions get
+summarized, and the "huh, that was surprising" detail is the first thing lost.
+
 ## When to commit
 
 **If the last step of validation needs the owner, do not commit — implement,
