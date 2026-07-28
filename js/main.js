@@ -7,7 +7,7 @@
   SP.state.subscribe(sel => SP.keyboard.repaint(sel));
   SP.state.subscribe(sel => SP.results.render(sel));
 
-  SP.midi.init();
+  document.getElementById("addMidiBtn").addEventListener("click", () => SP.midi.init());
 
   const latchToggle = document.getElementById("latchBtn");
   const latchText = document.getElementById("latchText");
@@ -25,10 +25,10 @@
   function applyFlats(){
     SP.keyboard.setFlats(flatsOn);
     SP.results.setFlats(flatsOn);
-    flatsToggle.checked = flatsOn;
+    flatsToggle.checked = !flatsOn;
     SP.state.notify();   // re-render the held chord in the new spelling immediately
   }
-  flatsToggle.addEventListener("change", () => { flatsOn = flatsToggle.checked; applyFlats(); });
+  flatsToggle.addEventListener("change", () => { flatsOn = !flatsToggle.checked; applyFlats(); });
   applyFlats();
 
   document.getElementById("clearBtn").addEventListener("click", () => SP.state.clear());

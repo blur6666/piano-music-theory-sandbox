@@ -10,13 +10,15 @@ Personal tool. No build step, no dependencies, no server.
 ## Running it
 
 Double-click `index.html`. Chrome or Edge — it uses the Web MIDI API, which
-Firefox and Safari don't support. Plug the keyboard in before opening the page;
-if the port won't open, close the DAW (Windows gives one app the port at a time).
+Firefox and Safari don't support. Plug the keyboard in, then click **Add MIDI
+device**; if the port won't open, close the DAW (Windows gives one app the port
+at a time).
 
 ## Using it
 
 | Control | What it does |
 | --- | --- |
+| **Add MIDI device** | Requests MIDI access and connects available MIDI inputs |
 | **MIDI keyboard** | Momentary by default — the display mirrors what's physically held |
 | **Mouse** | Follows the same mode as MIDI: press-and-hold when momentary, click-to-toggle when latched |
 | **Latch** | Note-on (or mouse press) toggles the key instead of holding it, so a scale can be tapped in one note at a time. Off on load. |

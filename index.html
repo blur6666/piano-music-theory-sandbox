@@ -10,8 +10,13 @@
 </head>
 <body>
 <div class="container">
-  <h1>Scale and chord piano</h1>
-  <p id="midiStatus" class="midi-status">MIDI: waiting for permission&hellip;</p>
+  <div class="page-header">
+    <h1>Scale and chord piano</h1>
+    <div class="midi-controls">
+      <p id="midiStatus" class="midi-status">MIDI: no device connected</p>
+      <button id="addMidiBtn">Add MIDI device</button>
+    </div>
+  </div>
   <div class="toolbar">
     <label class="toggle" for="latchBtn" title="Latched: tap a MIDI key to leave it on, tap again to turn it off">
       <input type="checkbox" id="latchBtn" class="toggle-input">
