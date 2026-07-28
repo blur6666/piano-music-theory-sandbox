@@ -4,6 +4,7 @@
   const keyEls = {};   // MIDI note number -> key element
   const mouseHeld = new Set();   // notes currently down via mouse, momentary mode only
   let latch = C.latch;   // mirrors SP.midi's flag; kept in sync by main.js's applyLatch()
+  let flats = C.flats;   // spelling of the key labels only; see the loop in init()
 
   function press(m){
     if (latch) SP.state.toggle(m);
@@ -29,7 +30,9 @@
       const wW = 100 / whiteTotal;
       let wIdx = 0;
       for (let m = C.LOW; m <= C.HIGH; m++){
-        const name = D.NAMES[m % 12], black = name.includes("#");
+        // Geometry always reads the sharps table -- "#" is the black-key
+        // test. The visible label is a separate decision, made below.
+        const black = D.NAMES[m % 12].includes("#");
         const el = document.createElement("div");
         el.className = "pkey " + (black ? "black" : "white");
         if (!black){
@@ -41,7 +44,7 @@
           el.style.left = (wIdx * wW - wW * 0.31) + "%";
         }
         const lbl = document.createElement("span");
-        lbl.textContent = name;
+        lbl.textContent = SP.theory.spell(m % 12, flats);
         lbl.className = "klabel";
         el.appendChild(lbl);
         el.addEventListener("mousedown", () => press(m));
@@ -64,6 +67,12 @@
 
     // Called by main.js's applyLatch() alongside SP.midi.setLatch(), so both
     // input paths always agree on the current mode.
-    setLatch(on){ latch = on; }
+    setLatch(on){ latch = on; },
+
+    // Labels only. Geometry never changes -- see init().
+    setFlats(on){
+      flats = on;
+      for (const m in keyEls) keyEls[m].firstChild.textContent = SP.theory.spell(+m % 12, flats);
+    }
   };
 })();

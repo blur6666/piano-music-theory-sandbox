@@ -118,6 +118,31 @@ li .got{display:block;color:var(--text-muted);font-size:13px;}
   eq("no match yields no key context",
      T.keyContext(T.detect([0,1,6], 0)), null);
 
+  // Flat spelling. The toggle is a per-pitch-class table swap: theory takes a
+  // boolean, never reads a global. Omitting it must keep the old behavior.
+  eq("spell defaults to sharps",
+     T.spell(1), "C#");
+  eq("spell with flats on",
+     T.spell(1, true), "Db");
+  eq("detect without the flag is unchanged",
+     T.detect([1,5,8], 1).label, "C# major — root position");
+  eq("detect with flats on respells the root",
+     T.detect([1,5,8], 1, true).label, "Db major — root position");
+  eq("flats reach the inversion's bass note too",
+     T.detect([8,0,3], 3, true).label, "Ab major — 2nd inversion (Eb in bass)");
+  eq("diatonic triads of Db major in flats",
+     T.diatonic(1, SP.data.MAJOR_IV, true).map(c => c.name).join(" "),
+     "Db Ebm Fm Gb Ab Bbm C°");
+  eq("keyContext inherits the spelling from the detect result",
+     T.keyContext(T.detect([1,5,8,0], 1, true)).label,
+     "Chords in the key of Db major (this chord as I)");
+  // Accepted limitation, asserted so it can't be mistaken for a regression:
+  // one name per pitch class means no per-degree letter math. Gb major's 7th
+  // degree is Cb in theory and prints "B" here; its vii° prints "F°".
+  eq("naive swap does not do key-correct letters",
+     T.diatonic(6, SP.data.MAJOR_IV, true).map(c => c.name).join(" "),
+     "Gb Abm Bbm B Db Ebm F°");
+
   const tally = document.getElementById("tally");
   tally.textContent = fail ? fail + " failed, " + pass + " passed" : "all " + pass + " passed";
   tally.className = fail ? "bad" : "ok";

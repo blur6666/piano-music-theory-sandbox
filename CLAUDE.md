@@ -47,8 +47,16 @@ else changes. Views read the Set they're handed; they never mutate it.
 
 - **`data.js`** — `CHORDS`/`SCALES` are `[name, intervals-from-root, (scales)
   degree-formula]`, e.g. `["minor 7","0,3,7,10"]`. Add a row and detection picks
-  it up. `SP.config`: key range, initial label visibility, latch default, MIDI
-  logging flag.
+  it up. `NAMES`/`FLATS` are parallel pitch-class tables (same index); `NAMES`
+  also doubles as the geometry source in `keyboard-ui.js`, so it never gets
+  swapped for display — use `theory.spell()` instead. `SP.config`: key range,
+  initial label visibility, latch default, flats default, MIDI logging flag.
+- **`theory.spell(pc, flats)`** — the one place that picks `NAMES` or `FLATS`.
+  Naive: one name per pitch class, no key context, so it isn't always the
+  textbook-correct letter (Gb major's 7th prints "B", not "Cb") — same
+  simplicity level the sharps-only default always had, just switchable.
+  `detect()` stamps its `flats` arg onto the returned result so `keyContext()`
+  re-spells the same way without a second argument to keep in sync.
 - **`theory.detect`** — reduce to pitch classes, try each candidate root (bass
   first) against both dictionaries; ≤4 notes prefers chords, ≥5 scales. Bass
   first means a rotation that is itself in the dictionary wins outright: C-major
@@ -65,6 +73,10 @@ else changes. Views read the Set they're handed; they never mutate it.
   `main.js`'s `applyLatch`): momentary presses add on `mousedown` and release on
   the next `mouseup` **anywhere on the page**, so a cursor that drifts off the
   key before release can't strand a note on; latched presses toggle.
+  Black/white geometry is derived from `data.NAMES` containing `"#"` — that
+  table is geometry, not display. Key labels go through `theory.spell()`
+  instead; swapping `NAMES` to change what's shown would make every key test
+  white.
 - **`midi.js`** — listener on every input port, re-hooked on `statechange`.
   Note-on adds / note-off removes (momentary). **Latch** (`config.latch`, off by
   default) instead toggles on note-on and ignores note-off. Both input paths
@@ -137,7 +149,14 @@ destinations, no fourth:
 
 ## Known limitations (accepted, do not "fix" unless asked)
 
-- Sharps only, no flat spelling (D# never Eb).
+- **Flats toggle is a per-pitch-class table swap, not key-aware spelling.**
+  With flats on, every accidental takes its flat name (D#→Eb) from one table
+  indexed by pitch class. Nothing computes a correct letter per scale degree,
+  so Gb major prints its 7th as B (not Cb) and a scale can repeat or skip
+  letters. This is parity with the sharps-only default, not a regression from
+  it — key-correct spelling needs letter+accidental math through
+  `detect`/`diatonic` plus key inference for results that deliberately have no
+  key, and is out of scope.
 - Dim/aug/sus/dominant chords get no "chords in this key" list — no single key.
 - Pentatonic/blues/whole-tone scales get no diatonic chord chips.
 - One MIDI port at a time on Windows — if it won't open, close the DAW.
@@ -147,8 +166,9 @@ destinations, no fourth:
 Most features are additive: **a new view** (fretboard, staff, quiz) is a new
 `js/` file, a `<script>` tag, and one `SP.state.subscribe(...)` in `main.js`;
 **a chord or scale** is one row in `data.js`; **pentatonic parent keys** are
-`theory.keyContext` alone; **flat spelling** is a table in `data.js` plus a
-function in `theory.js`, views unchanged.
+`theory.keyContext` alone. **Flat spelling** is `data.FLATS` + `theory.spell`,
+plus a boolean mirrored into each view exactly like `latch` — see the toolbar
+button in `main.js` for the pattern to copy for the next such toggle.
 
 If a change needs edits to three existing files, the layout is being fought —
 stop and reconsider where the logic belongs.

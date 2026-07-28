@@ -6,12 +6,20 @@ SP.config = {
   LOW: 36, HIGH: 96,   // MIDI range of the on-screen keyboard (C2-C7, 61 keys)
   showLabels: true,    // initial state of the "Note labels" checkbox
   latch: false,        // MIDI note-on toggles instead of held (entering scales)
+  flats: false,        // initial state of the "Flats" button; per-pitch-class swap, not key-aware
   logMIDI: true        // decode every incoming MIDI message to the console
 };
 
 SP.data = {
 
+  // Sharps table is also the geometry source in keyboard-ui.js (black-key
+  // test is "#"). Display spelling goes through theory.spell(); never swap
+  // this array to change what's shown.
   NAMES: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
+
+  // Display-only alternative, same index. Naive: one name per pitch class,
+  // no key context -- Gb major's 7th prints "B", not "Cb".
+  FLATS: ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"],
 
   IV: ["unison","minor 2nd","major 2nd","minor 3rd","major 3rd","perfect 4th","tritone","perfect 5th",
     "minor 6th","major 6th","minor 7th","major 7th","octave"],

@@ -20,6 +20,18 @@
   latchBtn.addEventListener("click", () => { latchOn = !latchOn; applyLatch(); });
   applyLatch();
 
+  const flatsBtn = document.getElementById("flatsBtn");
+  let flatsOn = SP.config.flats;
+  function applyFlats(){
+    SP.keyboard.setFlats(flatsOn);
+    SP.results.setFlats(flatsOn);
+    flatsBtn.classList.toggle("on", flatsOn);
+    flatsBtn.textContent = "Flats: " + (flatsOn ? "on" : "off");
+    SP.state.notify();   // re-render the held chord in the new spelling immediately
+  }
+  flatsBtn.addEventListener("click", () => { flatsOn = !flatsOn; applyFlats(); });
+  applyFlats();
+
   document.getElementById("clearBtn").addEventListener("click", () => SP.state.clear());
 
   const labelsToggle = document.getElementById("labelsToggle");

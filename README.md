@@ -20,12 +20,13 @@ if the port won't open, close the DAW (Windows gives one app the port at a time)
 | **MIDI keyboard** | Momentary by default — the display mirrors what's physically held |
 | **Mouse** | Follows the same mode as MIDI: press-and-hold when momentary, click-to-toggle when latched |
 | **Latch** | Note-on (or mouse press) toggles the key instead of holding it, so a scale can be tapped in one note at a time. Off on load. |
+| **Flats** | Spells accidentals as Db/Eb instead of C#/D#, on the keys and in the readout. Off on load. |
 | **Clear** | Empties the selection, latched notes included |
 | **Note labels** | Shows/hides the note name on each key |
 
 ## Testing
 
-Open `tests.html` — 27 assertions over `theory.js`, prints a pass/fail tally.
+Open `tests.html` — 35 assertions over `theory.js`, prints a pass/fail tally.
 
 **When editing, disable the cache.** Chrome caches `file://` scripts per file and
 will serve a stale `js/` file next to freshly-loaded ones — a control that
@@ -65,7 +66,8 @@ subscribes to `SP.state`. Details and the reasoning are in `CLAUDE.md`.
 
 ## Known limitations (deliberate)
 
-- Sharps only, no flat spelling (D# never Eb)
+- The Flats toggle renames every accidental to its flat name; it isn't key-aware
+  spelling, so Gb major's 7th shows as B rather than Cb
 - Dim/aug/sus/dominant chords get no "chords in this key" list — no single key
 - Pentatonic, blues, and whole-tone scales get no diatonic chord chips
 - One MIDI port at a time on Windows

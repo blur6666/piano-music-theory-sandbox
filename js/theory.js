@@ -5,8 +5,12 @@
 
   SP.theory = {
 
+    // The one place that chooses between the two tables. Display only --
+    // midi.js's console noteName() is deliberately exempt.
+    spell(pc, flats){ return (flats ? D.FLATS : D.NAMES)[pc]; },
+
     // Triads stacked from the tones of a 7-note scale. null for any other size.
-    diatonic(root, ivStr){
+    diatonic(root, ivStr, flats){
       const iv = ivStr.split(",").map(Number);
       if (iv.length !== 7) return null;
       return iv.map((t0, i) => {
@@ -19,13 +23,13 @@
         else if (a === 3 && b === 6){ suf = "°"; rn = rn.toLowerCase() + "°"; }
         else if (a === 4 && b === 8){ suf = "+"; rn = rn + "+"; }
         else { suf = "?"; }
-        return { name: D.NAMES[(root + t0) % 12] + suf, rn: rn };
+        return { name: this.spell((root + t0) % 12, flats) + suf, rn: rn };
       });
     },
 
     // Try every candidate root (bass first) against the dictionaries.
     // <=4 notes prefers chords, >=5 prefers scales.
-    detect(pcs, bass){
+    detect(pcs, bass, flats){
       const n = pcs.length;
       const dicts = n <= 4 ? [["chord", D.CHORDS], ["scale", D.SCALES]]
                            : [["scale", D.SCALES], ["chord", D.CHORDS]];
@@ -35,15 +39,17 @@
           const ivArr = pcs.map(p => (p - root + 12) % 12).sort((a, b) => a - b);
           const hit = dict.find(d => d[1] === ivArr.join(","));
           if (hit){
-            let label = D.NAMES[root] + " " + hit[0];
+            let label = this.spell(root, flats) + " " + hit[0];
             if (kind === "chord"){
               const pos = ivArr.indexOf((bass - root + 12) % 12);
               label += " — " + (D.ORD[pos] || pos + "th inversion");
-              if (pos > 0) label += " (" + D.NAMES[bass] + " in bass)";
+              if (pos > 0) label += " (" + this.spell(bass, flats) + " in bass)";
             } else if (root !== bass){
-              label += " (" + D.NAMES[bass] + " in bass)";
+              label += " (" + this.spell(bass, flats) + " in bass)";
             }
-            return { label: label, kind: kind, root: root, hit: hit };
+            // flats rides along on the result so keyContext() re-spells the
+            // same way without a second argument the caller could forget.
+            return { label: label, kind: kind, root: root, hit: hit, flats: flats };
           }
         }
       }
@@ -57,7 +63,7 @@
     keyContext(r){
       if (!r.hit) return null;
       if (r.kind === "scale"){
-        const chords = this.diatonic(r.root, r.hit[1]);
+        const chords = this.diatonic(r.root, r.hit[1], r.flats);
         return chords ? { label: "Diatonic chords", chords: chords } : null;
       }
       let ivStr = null, keyName = "";
@@ -65,8 +71,8 @@
       else if (D.MINOR_FAM.includes(r.hit[0])){ ivStr = D.MINOR_IV; keyName = "minor"; }
       if (!ivStr) return null;
       return {
-        label: "Chords in the key of " + D.NAMES[r.root] + " " + keyName + " (this chord as I)",
-        chords: this.diatonic(r.root, ivStr)
+        label: "Chords in the key of " + this.spell(r.root, r.flats) + " " + keyName + " (this chord as I)",
+        chords: this.diatonic(r.root, ivStr, r.flats)
       };
     }
   };
