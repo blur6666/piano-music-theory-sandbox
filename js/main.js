@@ -22,9 +22,47 @@
 
   const flatsToggle = document.getElementById("flatsBtn");
   let flatsOn = SP.config.flats;
+  const scaleSelect = document.getElementById("scaleSelect");
+  const keyChips = document.getElementById("keyChips");
+  let selectedRoot = null;
+
+  for (const [name] of SP.data.SCALES){
+    const option = document.createElement("option");
+    option.value = scaleSelect.options.length - 1;
+    option.textContent = name;
+    scaleSelect.appendChild(option);
+  }
+
+  function loadScale(){
+    if (scaleSelect.value === "" || selectedRoot === null) return;
+    latchOn = true;
+    applyLatch();
+    SP.state.replace(SP.theory.scaleNotesNearMiddleC(selectedRoot, SP.data.SCALES[scaleSelect.value][1]));
+  }
+
+  function renderKeyChips(){
+    keyChips.replaceChildren();
+    for (let pc = 0; pc < 12; pc++){
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "key-chip" + (pc === selectedRoot ? " active" : "");
+      chip.textContent = SP.theory.spell(pc, flatsOn);
+      chip.setAttribute("aria-pressed", pc === selectedRoot ? "true" : "false");
+      chip.addEventListener("click", () => {
+        selectedRoot = pc;
+        renderKeyChips();
+        loadScale();
+      });
+      keyChips.appendChild(chip);
+    }
+  }
+
+  scaleSelect.addEventListener("change", loadScale);
+
   function applyFlats(){
     SP.keyboard.setFlats(flatsOn);
     SP.results.setFlats(flatsOn);
+    renderKeyChips();
     flatsToggle.checked = !flatsOn;
     SP.state.notify();   // re-render the held chord in the new spelling immediately
   }

@@ -11,7 +11,7 @@
 <body>
 <div class="container">
   <div class="page-header">
-    <h1>Scale and chord piano</h1>
+    <h1>Scale and Chord Piano Sandbox</h1>
     <div class="midi-controls">
       <p id="midiStatus" class="midi-status">MIDI: no device connected</p>
       <button id="addMidiBtn">Add MIDI device</button>
@@ -31,6 +31,13 @@
     </label>
     <button id="clearBtn">Clear</button>
     <label class="labels-toggle"><input type="checkbox" id="labelsToggle" checked> Note labels</label>
+  </div>
+  <div class="scale-picker">
+    <label for="scaleSelect">Scale <select id="scaleSelect"><option value="">Choose a scale</option></select></label>
+    <div class="key-picker">
+      <span>Key</span>
+      <div id="keyChips" class="key-chips"></div>
+    </div>
   </div>
   <div id="kb" class="piano-wrap"></div>
   <div class="results">

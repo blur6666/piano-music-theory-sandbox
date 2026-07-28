@@ -25,10 +25,12 @@ at a time).
 | **Flats** | Spells accidentals as Db/Eb instead of C#/D#, on the keys and in the readout. Off on load. |
 | **Clear** | Empties the selection, latched notes included |
 | **Note labels** | Shows/hides the note name on each key |
+| **Scale** | Select a scale; after selecting a key, loads one ascending octave of that scale |
+| **Key** | Choose one root chip. The scale starts at the matching root nearest middle C and ends at its octave. |
 
 ## Testing
 
-Open `tests.html` — 57 assertions over `theory.js`, prints a pass/fail tally.
+Open `tests.html` — 59 assertions over `theory.js`, prints a pass/fail tally.
 
 **When editing, disable the cache.** Chrome caches `file://` scripts per file and
 will serve a stale `js/` file next to freshly-loaded ones — a control that

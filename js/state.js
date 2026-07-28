@@ -15,6 +15,11 @@ SP.state = {
     this.notify();
   },
 
+  replace(notes){
+    this.sel = new Set(notes);
+    this.notify();
+  },
+
   toggle(note){ this.set(note, !this.sel.has(note)); },
 
   clear(){ this.sel.clear(); this.notify(); }

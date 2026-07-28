@@ -9,6 +9,13 @@
     // midi.js's console noteName() is deliberately exempt.
     spell(pc, flats){ return (flats ? D.FLATS : D.NAMES)[pc]; },
 
+    // One ascending octave of a scale, rooted as close to middle C as possible.
+    // Math.round deliberately resolves the F#/Gb midpoint upward to F#4 (66).
+    scaleNotesNearMiddleC(root, ivStr){
+      const base = root + 12 * Math.round((60 - root) / 12);
+      return ivStr.split(",").map(Number).concat(12).map(i => base + i);
+    },
+
     // Degrees of a note set against an assumed root, for sets no dictionary
     // row covers. Sorted by semitone, so no stacked-thirds reordering --
     // that is what the hand-written CHORDS/SCALES columns are for.

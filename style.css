@@ -7,7 +7,7 @@
   --text-secondary: #a3a3a3;
   --text-muted: #737373;
   --border: #404040;
-  --border-strong: #595959;
+  --border-strong: #393838;
   --key-black: #0f0f0f;
   --key-black-text: #cccccc;
   --accent: #5c8fc4;
@@ -183,6 +183,61 @@ h1 {
   gap: 6px;
 }
 
+.scale-picker,
+.key-picker,
+.key-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.scale-picker {
+  gap: 16px;
+  margin: 0 0 1rem;
+}
+
+.scale-picker label,
+.key-picker {
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.scale-picker select {
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+}
+
+.key-chips {
+  gap: 6px;
+}
+
+.key-chip {
+  min-width: 32px;
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.key-chip:hover {
+  border-color: var(--border-strong);
+}
+
+.key-chip.active {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 .piano-wrap {
   position: relative;
   height: 160px;
@@ -220,7 +275,7 @@ h1 {
 
 .pkey.active {
   background: var(--accent);
-  border-color: var(--accent);
+  border-color: var(--border-strong);
 }
 
 .pkey.active .klabel {
