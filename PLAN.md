@@ -1,177 +1,182 @@
-# scale-piano — Refactor Plan
+# Flat spelling toggle
 
-Goal: turn a working 300-line single-file POC into a small, maintainable hobby
-project that can grow features without each change risking the whole file. One
-person, no hosting, no build step. KISS is a requirement, not a preference.
+## Context
 
-The refactor has one measurable outcome: **a new view or feature can be added
-by creating a new file, not by editing existing ones.**
+The tool has always shown accidentals as sharps only (`A#`, never `Bb`) — an
+accepted limitation from the original refactor. Solving it with a toggle
+button. The real fork was: a simple per-pitch-class name swap ("Bb=A#"), or
+full context-aware spelling that computes the theoretically correct letter for
+each scale degree.
 
-## Why refactor at all
+**Chosen: the simple swap.** Two reasons, both solid:
 
-The single file is fine until a feature touches everything. The likely next
-features (parent-key chords for pentatonics, flat spelling, a fretboard view,
-eventually a quiz mode) all want to reuse the theory logic and the selection
-state independently of the piano UI. Right now theory, state, MIDI, and DOM are
-interleaved.
+1. It's what CLAUDE.md already pre-committed to in "Adding things": *"flat
+   spelling is a table in `data.js` plus a function in `theory.js`, views
+   unchanged."* This plan delivers exactly that.
+2. Full context-aware spelling isn't a bigger version of the same feature —
+   it's a different data model. Correct spelling needs letter+accidental math
+   (`{letter: 4, alter: -1}`, not a pitch-class string) threaded through
+   `detect`/`diatonic`, *plus* key inference for the results that deliberately
+   have no key today (`keyContext` already returns `null` for dim/aug/sus/
+   dominant chords and non-7-note scales — exactly the cases with nothing to
+   spell correctly against). That's a `theory.js` rewrite, not a toggle.
 
-## Target layout
+The simple swap is also honest at the same level the tool already is: it shows
+`C#` today with no regard for whether the key would call it `Db`; flipped on,
+it shows `Db` with the same disregard the other direction. Same quality bar,
+not a regression — the value is letting you pick which glyph you'd rather read
+without the tool pretending to know your key.
 
+## The one trap
+
+`keyboard-ui.js` decides black-vs-white key geometry by testing
+`D.NAMES[m % 12].includes("#")`. That table must stay the geometry source
+regardless of spelling — swapping it (or feeding a flats table into it) makes
+every key test white and the layout collapses. Spelling is chosen through a
+new function instead, so geometry and display stay structurally decoupled.
+
+## Design
+
+A boolean (`flats`), mirrored into each consuming module exactly like `latch`
+already is, plus one new pure function `SP.theory.spell(pc, flats)` that both
+views call instead of ever touching `NAMES`/`FLATS` directly.
+
+**`js/data.js`** — new config default and table:
+```js
+flats: false,   // initial state of the "Flats" button; per-pitch-class swap, not key-aware
 ```
-midi-kb-sandbox/
-├── index.html          markup shell + script tags at end of <body>
-├── style.css           the current <style> block, unchanged
-├── tests.html          console.assert over data.js + theory.js
-├── CLAUDE.md
-├── REFACTOR_PLAN.md
-└── js/
-    ├── data.js         SP.config knobs + all static tables
-    ├── theory.js       detect / diatonic / keyContext — pure, no DOM
-    ├── state.js        selection Set + subscribe/notify
-    ├── midi.js         Web MIDI hookup, message decoding, console log
-    ├── keyboard-ui.js  builds and repaints the on-screen piano
-    ├── results-ui.js   renders the detection panel
-    └── main.js         wires everything, the only file that runs on load
+```js
+// Sharps table is also the geometry source in keyboard-ui.js (black-key test
+// is "#"). Display spelling goes through theory.spell(); never swap this
+// array to change what's shown.
+NAMES: ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],
+
+// Display-only alternative, same index. Naive: one name per pitch class, no
+// key context -- Gb major's 7th prints "B", not "Cb".
+FLATS: ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"],
 ```
 
-Seven JS files for ~190 lines. Anything finer is more shelves than books.
+**`js/theory.js`** — one new function; `detect`/`diatonic` take a trailing
+optional `flats` boolean (omitted → falsy → sharps, so all 27 existing calls
+are unaffected):
+```js
+spell(pc, flats){ return (flats ? D.FLATS : D.NAMES)[pc]; },
+```
+`diatonic(root, ivStr, flats)` and `detect(pcs, bass, flats)` route their name
+lookups through `this.spell(...)` instead of `D.NAMES[...]`. `detect()` stamps
+`flats` onto its returned object (`{label, kind, root, hit, flats}`).
+**`keyContext(r)` keeps its existing 1-argument signature** and reads
+`r.flats` — this is the key correctness move: it removes the failure mode
+where a caller could pass `detect(..., true)` and `keyContext(r, false)` and
+get a flat chord name over sharp-spelled chips. One call always agrees with
+the other because the choice travels with the result, not as a second
+argument someone has to remember to repeat.
 
-## Decision: plain script tags, no ES modules
+**`js/keyboard-ui.js`** — mirrors `flats` next to the existing `latch` mirror.
+In the build loop, geometry (`black = D.NAMES[m % 12].includes("#")`) stays on
+the sharps table; only the label text changes to
+`SP.theory.spell(m % 12, flats)`. New method, structurally identical to
+`setLabels`:
+```js
+setFlats(on){
+  flats = on;
+  for (const m in keyEls) keyEls[m].firstChild.textContent = SP.theory.spell(+m % 12, flats);
+}
+```
 
-ES modules (`import`/`export`) don't load over `file://` in Chrome — you'd need
-a local server running just to open your own tool. That violates "double-click
-the file and it works."
+**`js/results-ui.js`** — same mirror pattern. `setFlats(on){ flats = on; }`;
+the "Notes" line and the single-note fallback route through
+`SP.theory.spell(...)`; `SP.theory.detect(pcs, bass, flats)` passes the flag;
+`keyContext(r)` needs no change since it reads `r.flats`.
 
-Instead: each file attaches to one global namespace object `SP`, and
-`index.html` loads them with ordinary `<script>` tags in dependency order, at
-the **end of `<body>`**. `data.js` declares `var SP = {};`; every other file
-assumes it exists — if the script order is ever wrong it fails loudly on the
-next line, which is the right behavior here.
+**`js/main.js`** — a near-copy of the existing `applyLatch()` block, right
+after it:
+```js
+const flatsBtn = document.getElementById("flatsBtn");
+let flatsOn = SP.config.flats;
+function applyFlats(){
+  SP.keyboard.setFlats(flatsOn);
+  SP.results.setFlats(flatsOn);
+  flatsBtn.classList.toggle("on", flatsOn);
+  flatsBtn.textContent = "Flats: " + (flatsOn ? "on" : "off");
+  SP.state.notify();   // re-render the held chord in the new spelling immediately
+}
+flatsBtn.addEventListener("click", () => { flatsOn = !flatsOn; applyFlats(); });
+applyFlats();
+```
+`notify()` lives in `applyFlats()`, not in `setFlats()` on either module — a
+view calling back into state would invert the input→state→view contract, and
+it would fire twice per click if both modules did it.
 
-## File contents
+**`index.html`** — one button in the toolbar, after Latch:
+```html
+<button id="flatsBtn" title="Spell accidentals as flats (Db, Eb...) instead of sharps (C#, D#...)">Flats: off</button>
+```
 
-**`js/data.js`** — knobs first, then tables:
+**`style.css`** — no changes. `.toolbar button` / `.toolbar button.on` already
+cover it.
+
+## Tests
+
+8 new assertions in `tests.html`, all using accidental roots so the flip is
+actually visible (none of the 27 existing ones do, which is why they're safe
+unchanged). Every string below was computed by hand against the real
+algorithm, not guessed:
 
 ```js
-var SP = {};
-SP.config = {
-  LOW: 36, HIGH: 96,   // MIDI range of the on-screen keyboard (C2–C7)
-  showLabels: true,    // initial state of the Note labels checkbox
-  logMIDI: true        // decode every MIDI message to the console
-};
-SP.data = { NAMES, IV, ORD, ROMAN, CHORDS, SCALES, MAJOR_FAM, MINOR_FAM,
-            MAJOR_IV: "0,2,4,5,7,9,11", MINOR_IV: "0,2,3,5,7,8,10" };
+eq("spell defaults to sharps", T.spell(1), "C#");
+eq("spell with flats on", T.spell(1, true), "Db");
+eq("detect without the flag is unchanged",
+   T.detect([1,5,8], 1).label, "C# major — root position");
+eq("detect with flats on respells the root",
+   T.detect([1,5,8], 1, true).label, "Db major — root position");
+eq("flats reach the inversion's bass note too",
+   T.detect([8,0,3], 3, true).label, "Ab major — 2nd inversion (Eb in bass)");
+eq("diatonic triads of Db major in flats",
+   T.diatonic(1, SP.data.MAJOR_IV, true).map(c => c.name).join(" "),
+   "Db Ebm Fm Gb Ab Bbm C°");
+eq("keyContext inherits the spelling from the detect result",
+   T.keyContext(T.detect([1,5,8,0], 1, true)).label,
+   "Chords in the key of Db major (this chord as I)");
+// Accepted limitation, asserted so it can't be mistaken for a regression later:
+eq("naive swap does not do key-correct letters",
+   T.diatonic(6, SP.data.MAJOR_IV, true).map(c => c.name).join(" "),
+   "Gb Abm Bbm B Db Ebm F°");
 ```
+27 + 8 = **35**. Update the count in `README.md`.
 
-**`js/theory.js`** — `detect()` and `diatonic()` move verbatim, plus one new
-function that absorbs the key logic previously inside `render()`:
+## Docs
 
-```js
-SP.theory.keyContext = function (r) {   // r is a detect() result
-  // scale  -> { label: "Diatonic chords", chords }
-  // major/minor-family chord -> { label: "Chords in the key of X …", chords }
-  // otherwise -> null
-};
-```
-
-`results-ui.js` makes one call and renders whatever comes back. This is the
-extension point where pentatonic parent-key chords land later, with no view
-edit. `detect()` keeps building its label string — splitting that into
-structured fields costs more than it returns today.
-
-**`js/state.js`** — the one architectural change:
-
-```js
-SP.state = {
-  sel: new Set(), listeners: [],
-  subscribe(fn){ this.listeners.push(fn); },
-  notify(){ this.listeners.forEach(fn => fn(this.sel)); },
-  set(note, on){ on ? this.sel.add(note) : this.sel.delete(note); this.notify(); },
-  toggle(note){ this.set(note, !this.sel.has(note)); },
-  clear(){ this.sel.clear(); this.notify(); }
-};
-```
-
-Listeners receive the live `Set` — views read it, never mutate it. MIDI and
-mouse call `set`/`toggle`; the keyboard painter and results panel `subscribe`.
-Neither input knows the views exist; neither view knows where notes come from.
-
-**`js/midi.js`** — gains `CC_NAMES` and `noteName()` (octave-suffixed; it is
-console-only, which is why it doesn't violate the no-octave display rule).
-Exposes `SP.midi.init()`.
-
-**`js/keyboard-ui.js`** — exposes `init()`, `repaint(sel)`, `setLabels(on)`.
-Two changes from verbatim:
-
-- derive the white-key count instead of hardcoding 36, so the `LOW`/`HIGH`
-  knobs actually work
-- `repaint(sel)` sets `classList.toggle("active", sel.has(m))` across all keys.
-  61 elements, free. This replaces the three places that used to hand-manage
-  the active class, and keeps the DOM in sync with the Set by construction.
-
-**`js/results-ui.js`** — `init()` caches the element lookups once; `render(sel)`
-holds the display logic and `renderChips`.
-
-**`js/main.js`** — the only file with load-time behavior: init the views,
-subscribe them to state, init MIDI, wire the toolbar, then one `SP.state.notify()`
-for the initial paint.
-
-## Phases
-
-Commit after each. The tool must work at the end of every one.
-
-**Phase 0 — done.** Repo, first commit, and doc filename fixes.
-
-**Phase 1 — extract CSS.** `<style>` → `style.css`, add `<link>`. Nothing else.
-
-**Phase 2 — split JS into the 7 files.** The long phase. Mostly mechanical
-reference fixing (`NAMES` → `SP.data.NAMES`). Three deliberate non-verbatim
-bits, all listed above: `keyContext` extraction, `whiteTotal` derivation,
-cached element lookups.
-
-**Phase 3 — `tests.html`.** Loads `data.js` + `theory.js` only (both are
-side-effect free, which is what makes this possible) and runs assertions,
-printing a pass/fail tally to the page. Placed here, immediately after the
-split, because it validates the `keyContext` move — the riskiest part of
-Phase 2.
-
-**Phase 4 — state subscribers.** Swap the direct `render()` calls for
-`SP.state`, delete `press()` and the now-dead class handling in the click and
-Clear handlers.
-
-**Phase 5 — update `CLAUDE.md`** to describe the new layout and the state
-contract.
+- **CLAUDE.md "Known limitations"** — replace the sharps-only bullet with an
+  honest description of what the toggle does and doesn't guarantee (naive
+  swap, not key-correct; point at the Gb-major example above).
+- **README.md "Known limitations"** — same replacement, shorter.
+- **README.md control table** — add a Flats row next to Latch.
+- **CLAUDE.md `keyboard-ui.js` bullet** — add the trap as a permanent rule:
+  geometry reads `NAMES` for its `#` test; that's decoupled from display,
+  which goes through `theory.spell()`.
+- **CLAUDE.md "Adding things"** — the flat-spelling line currently describes a
+  future plan; reword to describe what's actually shipped (`data.FLATS` +
+  `theory.spell`, plus a mirrored boolean).
 
 ## Verification
 
-Smoke test after each phase, in Chrome, by double-clicking `index.html`:
+No browser tool is available this session. Verification plan, in order:
 
-- **Hard-reload every time** (Ctrl+Shift+R). Chrome caches `file://` scripts
-  aggressively and will happily serve you the previous version of a `js/` file.
-- Click C–E–G → `C major — root position`.
-- Click E–G–C (E lowest) → `1st inversion (E in bass)`.
-- Play a major scale on the MIDI keyboard → correct name, degree formula, and
-  seven diatonic chips with C highlighted.
-- Hold a Cmaj7 → "Chords in the key of C major (this chord as I)".
-- Console shows timestamped decoded MIDI; note-off clears the key.
-- Clear button empties the panel and unlights every key.
-- Note-labels checkbox still hides/shows labels.
+1. **`theory.js` in isolation, via Node** — load `data.js` + `theory.js` and
+   run the 8 new assertions above.
+2. **`keyboard-ui.js`, via a fake-DOM shim** — confirm `setFlats` changes
+   label text without touching the black/white class assignment, and that
+   geometry is unaffected by the flag.
+3. **Ask the owner to smoke-test in the real browser** before committing:
+   toggle Flats with nothing held (labels change), hold a chord and toggle it
+   live (Detected line updates immediately via `notify()`), confirm mouse and
+   MIDI both still work normally. Hard-reload / disable-cache per the
+   documented `file://` cache trap.
 
-From Phase 3 on, also open `tests.html` and confirm zero failures.
+Only after that confirmation does the implementation get committed, per the
+"validation needs the owner" rule.
 
-## How the known feature ideas land afterward
+## Deviations
 
-Parent-key chords for pentatonics: edit `theory.js` only. Flat spelling:
-`data.js` gains a spelling table, `theory.js` a spelling function; views
-unchanged. Fretboard view: new `fretboard-ui.js` that subscribes to state —
-zero edits elsewhere, which is the whole point.
-
-## Explicitly out of scope
-
-No npm, no bundler, no TypeScript, no framework, no linter config, no CI, no
-minification, no browser support beyond Chrome/Edge on your PC. Any future
-temptation toward these should be checked against: does it help one person open
-one local file and study theory? So far nothing on this list does.
-
-Also not doing: flat spelling, audio, or structured (non-string) `detect()`
-output — all deferred, none blocked by this layout.
+(none yet — appended here during implementation if reality forces a change)
