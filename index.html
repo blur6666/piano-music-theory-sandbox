@@ -4,17 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scale and chord piano</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="container">
   <div class="page-header">
-    <h1>Scale and Chord Piano Sandbox</h1>
+    <h1>Piano Sandbox</h1>
     <div class="midi-controls">
+      <div class="theme-swatches" aria-label="Color themes">
+        <button type="button" class="theme-swatch theme-amber" aria-pressed="true" title="Amber"></button>
+        <button type="button" class="theme-swatch theme-red" aria-pressed="false" title="Red"></button>
+        <button type="button" class="theme-swatch theme-lime" aria-pressed="false" title="Lime"></button>
+        <button type="button" class="theme-swatch theme-ivory" aria-pressed="false" title="Ivory"></button>
+        <button type="button" class="theme-swatch theme-blue" aria-pressed="false" title="Blue"></button>
+        <button type="button" class="theme-swatch theme-indigo" aria-pressed="false" title="Indigo"></button>
+        <button type="button" class="theme-swatch theme-pink" aria-pressed="false" title="Pink"></button>
+      </div>
       <p id="midiStatus" class="midi-status">MIDI: no device connected</p>
-      <button id="addMidiBtn">Add MIDI device</button>
+      <button id="addMidiBtn">Connect MIDI</button>
     </div>
   </div>
   <div class="toolbar">
@@ -23,6 +31,7 @@
       <span class="toggle-text" id="latchText">Latch </span>
       <span class="toggle-track"><span class="toggle-thumb"></span></span>
     </label>
+    <label class="labels-toggle"><input type="checkbox" id="labelsToggle" checked> Note labels</label>
     <label class="toggle" for="flatsBtn" title="Spell accidentals as flats (Db, Eb...) instead of sharps (C#, D#...)">
       <input type="checkbox" id="flatsBtn" class="toggle-input">
       <span class="toggle-text flats-option flats-option-left">b</span>
@@ -30,16 +39,15 @@
       <span class="toggle-text flats-option flats-option-right">#</span>
     </label>
     <button id="clearBtn">Clear</button>
-    <label class="labels-toggle"><input type="checkbox" id="labelsToggle" checked> Note labels</label>
   </div>
-  <div class="scale-picker">
+  <div class="scale-picker" hidden>
     <label for="scaleSelect">Scale <select id="scaleSelect"><option value="">Choose a scale</option></select></label>
     <div class="key-picker">
       <span>Key</span>
       <div id="keyChips" class="key-chips"></div>
     </div>
   </div>
-  <div id="kb" class="piano-wrap"></div>
+  <div class="piano-shell"><div id="kb" class="piano-wrap"></div></div>
   <div class="results">
     <div class="results-col col-left">
       <p class="field-label">Notes</p>

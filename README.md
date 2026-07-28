@@ -10,7 +10,7 @@ Personal tool. No build step, no dependencies, no server.
 ## Running it
 
 Double-click `index.html`. Chrome or Edge — it uses the Web MIDI API, which
-Firefox and Safari don't support. Plug the keyboard in, then click **Add MIDI
+Firefox and Safari don't support. Plug the keyboard in, then click **Connect MIDI
 device**; if the port won't open, close the DAW (Windows gives one app the port
 at a time).
 
@@ -18,15 +18,14 @@ at a time).
 
 | Control | What it does |
 | --- | --- |
-| **Add MIDI device** | Requests MIDI access and connects available MIDI inputs |
+| **Connect MIDI** | Requests MIDI access and connects available MIDI inputs |
 | **MIDI keyboard** | Momentary by default — the display mirrors what's physically held |
 | **Mouse** | Follows the same mode as MIDI: press-and-hold when momentary, click-to-toggle when latched |
 | **Latch** | Note-on (or mouse press) toggles the key instead of holding it, so a scale can be tapped in one note at a time. Off on load. |
 | **Flats** | Spells accidentals as Db/Eb instead of C#/D#, on the keys and in the readout. Off on load. |
 | **Clear** | Empties the selection, latched notes included |
 | **Note labels** | Shows/hides the note name on each key |
-| **Scale** | Select a scale; after selecting a key, loads one ascending octave of that scale |
-| **Key** | Choose one root chip. The scale starts at the matching root nearest middle C and ends at its octave. |
+| **Scale / Key** | Temporarily hidden while the revised layout is finalized |
 
 ## Testing
 
