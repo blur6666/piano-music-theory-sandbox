@@ -85,20 +85,58 @@ Views read the Set they're handed; they never mutate it.
 - **MIDI** (`midi.js`): `navigator.requestMIDIAccess()`, listener attached to
   every input port, re-hooked on `statechange`. Note-on (0x90 vel>0) adds,
   note-off (0x80, or 0x90 vel 0) removes — momentary, so the display mirrors
-  what is physically held. Non-note messages are ignored for logic but decoded
+  what is physically held. **Latch mode** (toolbar button, off by default,
+  `config.latch`) instead makes note-on call `state.toggle()` and ignores
+  note-off, so a scale can be tapped in one note at a time rather than held —
+  the same behavior mouse clicks already have. Switching modes deliberately
+  leaves lit notes alone; Clear is right there. Non-note messages are ignored
+  for logic but decoded
   human-readable to the console with an `HH:MM:SS.mmm` timestamp
   (`describeMIDI`). Its `noteName()` includes an octave number on purpose:
   console only, and not subject to the display convention above.
 
 ## Testing
 
-Open `tests.html` in the browser; it prints a pass/fail tally. Hard-reload
-(Ctrl+Shift+R) — Chrome caches `file://` scripts aggressively and will happily
-serve you the previous version of a `js/` file.
+Open `tests.html` in the browser; it prints a pass/fail tally.
 
 Manual smoke test for anything touching the UI: click C-E-G → "C major — root
 position"; play a scale on the MIDI keyboard → correct name, degrees, chips;
-check console decoding; Clear button; note-labels checkbox.
+check console decoding; Clear button; Latch button; note-labels checkbox.
+
+### Driving MIDI without the keyboard
+
+`SP.midi.onMIDI` is exported so the whole input path can be run from the
+console — no hardware, no port to fight over:
+
+```js
+SP.midi.onMIDI({data:[0x90,60,100]});   // note on  C4
+SP.midi.onMIDI({data:[0x80,60,0]});     // note off C4
+```
+
+That covers momentary vs latch, chord and scale detection, everything except
+the browser actually talking to the device. `SP.midi.describeMIDI(bytes)` is
+exported for the same reason.
+
+### READ THIS BEFORE DEBUGGING A DEAD CONTROL
+
+**Chrome caches `file://` scripts per file, and it will serve a stale `js/`
+file next to freshly-loaded ones.** This has already cost an hour once: a new
+button rendered correctly from an updated `index.html` while `main.js` came
+from cache, so the element existed with no listener attached and every click
+did nothing. The code was correct the whole time.
+
+Symptoms — a control that renders but does nothing; a function that exists but
+behaves like an older version; edits that "don't take" while *other* edits in
+the same commit clearly did.
+
+- Ctrl+Shift+R. Note that a plain `location.reload()` was **not** enough.
+- Still stale? Temporarily version the tag — `<script src="js/main.js?v=2">` —
+  load, confirm, then revert it. Don't commit the query string.
+- Confirm what's actually loaded before suspecting logic: check that a function
+  you just added exists (`typeof SP.midi.setLatch`), or spy on it to prove a
+  handler is really wired, rather than inferring from the UI.
+
+**Suspect the cache before the code.**
 
 ## Known limitations (accepted, do not "fix" unless asked)
 
