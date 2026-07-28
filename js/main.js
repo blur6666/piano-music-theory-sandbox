@@ -1,6 +1,26 @@
 // The only file that runs anything on load. Everything above it just defines.
 (function(){
 
+  const themeButtons = document.querySelectorAll(".theme-swatch");
+  const themeVars = { page:"--page", text:"--text-primary", strong:"--text-strong", dim:"--text-secondary",
+                      faint:"--text-muted", rule:"--border", accent:"--accent", accentHi:"--accent-hi",
+                      onAccent:"--on-accent", second:"--second" };
+  function applyTheme(name){
+    const theme = SP.data.THEMES[name];
+    const root = document.documentElement;
+    for (const key in themeVars) root.style.setProperty(themeVars[key], theme[key]);
+    root.style.colorScheme = theme.dark ? "dark" : "light";
+    themeButtons.forEach(button => button.setAttribute("aria-pressed", button.dataset.theme === name ? "true" : "false"));
+  }
+  themeButtons.forEach(button => {
+    button.style.background = SP.data.THEMES[button.dataset.theme].accent;
+    button.addEventListener("click", () => {
+      localStorage.setItem("piano-theme", button.dataset.theme);
+      applyTheme(button.dataset.theme);
+    });
+  });
+  applyTheme(localStorage.getItem("piano-theme") || SP.config.theme);
+
   SP.keyboard.init();
   SP.results.init();
 

@@ -7,10 +7,56 @@ SP.config = {
   showLabels: true,    // initial state of the "Note labels" checkbox
   latch: false,        // MIDI note-on toggles instead of held (entering scales)
   flats: false,        // initial state of the "Flats" button; per-pitch-class swap, not key-aware
-  logMIDI: true        // decode every incoming MIDI message to the console
+  logMIDI: true,       // decode every incoming MIDI message to the console
+  theme: "brass"       // visual palette; swatches reset to this choice on reload
 };
 
 SP.data = {
+
+  THEMES: {
+    brass: {
+      name: "Brass on ink", dark: true,
+      page: "radial-gradient(120% 80% at 50% -10%, #1d1a16 0%, #100f0d 55%, #0b0a09 100%)",
+      text: "#efe8db", strong: "#f8efdc", dim: "#8a8072", faint: "#5c554a", rule: "#262219",
+      accent: "#e0a13c", accentHi: "#f0b555", onAccent: "#1a1611", second: "#9dc0ac"
+    },
+    paper: {
+      name: "Rust on paper", dark: false,
+      page: "radial-gradient(120% 80% at 50% -10%, #fbf7ef 0%, #efe8da 55%, #e4dccb 100%)",
+      text: "#2e2a24", strong: "#1d1a15", dim: "#7c7364", faint: "#a89d8a", rule: "#d8cfbc",
+      accent: "#b8472c", accentHi: "#cf5a3c", onAccent: "#fdf6ee", second: "#3f6b5c"
+    },
+    moss: {
+      name: "Moss & lime", dark: true,
+      page: "radial-gradient(120% 80% at 50% -10%, #16211a 0%, #0d1410 55%, #080d0a 100%)",
+      text: "#e2ebe1", strong: "#f1f8ef", dim: "#818f80", faint: "#525e52", rule: "#1e2b21",
+      accent: "#a8d24b", accentHi: "#bde066", onAccent: "#152007", second: "#e0c07a"
+    },
+    mono: {
+      name: "Monochrome", dark: true,
+      page: "radial-gradient(120% 80% at 50% -10%, #202020 0%, #131313 55%, #0a0a0a 100%)",
+      text: "#e8e8e8", strong: "#ffffff", dim: "#8b8b8b", faint: "#5a5a5a", rule: "#262626",
+      accent: "#f2f2f2", accentHi: "#ffffff", onAccent: "#121212", second: "#a8a8a8"
+    },
+    blueprint: {
+      name: "Blueprint", dark: false,
+      page: "radial-gradient(120% 80% at 50% -10%, #f4f7fb 0%, #e6ecf4 55%, #d9e2ee 100%)",
+      text: "#1f2c3d", strong: "#121c29", dim: "#6d7c90", faint: "#9aa7b8", rule: "#cbd6e4",
+      accent: "#1f5fd0", accentHi: "#3a79e6", onAccent: "#f2f7ff", second: "#c0632a"
+    },
+    sand: {
+      name: "Sand & indigo", dark: false,
+      page: "radial-gradient(120% 80% at 50% -10%, #f6efe0 0%, #ece0c9 55%, #e0d2b7 100%)",
+      text: "#2c2740", strong: "#1b1730", dim: "#7a7186", faint: "#a79c9f", rule: "#d6c7a9",
+      accent: "#3b3a8f", accentHi: "#5150ad", onAccent: "#f7f4ea", second: "#a1622a"
+    },
+    neon: {
+      name: "Magenta graphite", dark: true,
+      page: "radial-gradient(120% 80% at 50% -10%, #21202a 0%, #14141a 55%, #0c0c11 100%)",
+      text: "#e4e1ea", strong: "#f9f6ff", dim: "#8b8798", faint: "#5b5769", rule: "#272533",
+      accent: "#ff3d8b", accentHi: "#ff6aa5", onAccent: "#1a0a13", second: "#5fd8d0"
+    }
+  },
 
   // Sharps table is also the geometry source in keyboard-ui.js (black-key
   // test is "#"). Display spelling goes through theory.spell(); never swap

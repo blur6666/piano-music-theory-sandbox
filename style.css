@@ -1,21 +1,22 @@
 :root {
   color-scheme: dark;
-  --surface-0: #100f0d;
-  --surface-1: #18150f;
-  --surface-2: #211d16;
-  --text-primary: #f6efe2;
-  --text-secondary: #a5967d;
-  --text-muted: #756b5b;
-  --border: #2b261e;
-  --border-strong: #49391f;
+  --page: radial-gradient(120% 80% at 50% -10%, #1d1a16 0%, #100f0d 55%, #0b0a09 100%);
+  --text-primary: #efe8db;
+  --text-strong: #f8efdc;
+  --text-secondary: #8a8072;
+  --text-muted: #5c554a;
+  --border: #262219;
+  --border-strong: color-mix(in srgb, var(--border) 65%, var(--accent));
   --key-black: #120f0b;
   --key-black-text: #a9987d;
   --accent: #e0a13c;
-  --accent-bg: #2c2111;
-  --accent-text: #f0bd5b;
+  --accent-hi: #f0b555;
+  --second: #9dc0ac;
   --key-white: #f6efe2;
   --key-white-text: #786d5b;
   --on-accent: #1b140a;
+  --surface-1: color-mix(in srgb, var(--text-primary) 5%, transparent);
+  --surface-2: color-mix(in srgb, var(--text-primary) 9%, transparent);
   --radius: 12px;
 }
 
@@ -26,7 +27,7 @@
 body {
   min-height: 100vh;
   margin: 0;
-  background: var(--surface-0);
+  background: var(--page);
   color: var(--text-primary);
   font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 16px;
@@ -34,7 +35,7 @@ body {
 }
 
 .container {
-  max-width: none;
+  max-width: 1420px;
   margin: 0 auto;
   padding: 46px 26px 64px;
 }
@@ -60,6 +61,7 @@ body {
 
 h1 {
   margin: 0;
+  color: var(--text-strong);
   font-size: clamp(32px, 3vw, 42px);
   font-weight: 600;
   letter-spacing: -0.04em;
@@ -89,14 +91,6 @@ h1 {
   outline-offset: 2px;
 }
 
-.theme-amber { background: #e0a13c; }
-.theme-red { background: #bd482c; }
-.theme-lime { background: #a8d341; }
-.theme-ivory { background: #f6f4ee; }
-.theme-blue { background: #2761c7; }
-.theme-indigo { background: #3d3c91; }
-.theme-pink { background: #ef3d87; }
-
 .midi-status {
   display: flex;
   align-items: center;
@@ -110,17 +104,17 @@ h1 {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #3a3126;
+  background: var(--text-muted);
   content: "";
 }
 
 .midi-status.ok {
-  color: var(--accent-text);
+  color: var(--accent);
 }
 
 .midi-status.ok::before {
   background: var(--accent);
-  box-shadow: 0 0 12px rgba(224, 161, 60, 0.65);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 65%, transparent);
 }
 
 .midi-controls button:not(.theme-swatch) {
@@ -136,7 +130,7 @@ h1 {
 }
 
 .midi-controls button:not(.theme-swatch):hover {
-  background: #edb454;
+  background: var(--accent-hi);
 }
 
 .toolbar {
@@ -166,7 +160,7 @@ h1 {
 .toolbar button:hover,
 .toolbar .toggle:hover,
 .toolbar .labels-toggle:hover {
-  border-color: #72552a;
+  border-color: var(--accent);
   background: var(--surface-2);
 }
 
@@ -199,7 +193,7 @@ h1 {
   height: 11px;
   flex: 0 0 11px;
   border-radius: 50%;
-  background: #4a3b27;
+  background: var(--text-muted);
   content: "";
 }
 
@@ -210,7 +204,7 @@ h1 {
 .toolbar .toggle-input:checked ~ .toggle-track,
 .toolbar .labels-toggle:has(input:checked)::before {
   background: var(--accent);
-  box-shadow: 0 0 13px rgba(224, 161, 60, 0.75);
+  box-shadow: 0 0 13px color-mix(in srgb, var(--accent) 70%, transparent);
 }
 
 .toolbar .toggle-text {
@@ -320,7 +314,7 @@ h1 {
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 20px;
-  background: #17140f;
+  background: var(--surface-1);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
 }
 
@@ -331,7 +325,7 @@ h1 {
   left: 23px;
   height: 10px;
   border-radius: 999px;
-  background: #2a251d;
+  background: var(--surface-2);
   content: "";
 }
 
@@ -378,9 +372,9 @@ h1 {
 }
 
 .pkey.active {
-  border-color: #9c6d20;
+  border-color: color-mix(in srgb, var(--accent) 68%, #000);
   background: var(--accent);
-  box-shadow: inset 0 -9px 0 rgba(123, 72, 10, 0.17);
+  box-shadow: inset 0 -9px 0 color-mix(in srgb, var(--accent) 70%, #000);
 }
 
 .pkey.active .klabel {
@@ -447,7 +441,7 @@ h1 {
 
 #notesOut,
 #degOut {
-  color: var(--accent-text);
+  color: var(--second);
 }
 
 #nameOut {
@@ -500,7 +494,7 @@ h1 {
 }
 
 .chip.tonic .rn {
-  color: var(--accent-text);
+  color: var(--accent);
 }
 
 @media (max-width: 850px) {

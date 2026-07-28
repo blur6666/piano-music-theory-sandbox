@@ -108,6 +108,9 @@ li .got{display:block;color:var(--text-muted);font-size:13px;}
      T.detect([0,1,6], 1, true).label, "Db ? (unknown chord)");
   eq("every CHORDS row carries a degree-formula column",
      SP.data.CHORDS.every(c => c.length === 3), true);
+  eq("all seven theme palettes are present",
+     Object.keys(SP.data.THEMES).join(","),
+     "brass,paper,moss,mono,blueprint,sand,neon");
 
   // suspects() -- chords rooted on the bass that contain everything held,
   // closest tier only. Root is always the bass, same rule as detect()'s

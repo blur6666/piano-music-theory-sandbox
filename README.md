@@ -19,6 +19,7 @@ at a time).
 | Control | What it does |
 | --- | --- |
 | **Connect MIDI** | Requests MIDI access and connects available MIDI inputs |
+| **Color swatches** | Switch the page palette; the last choice is restored on reload |
 | **MIDI keyboard** | Momentary by default — the display mirrors what's physically held |
 | **Mouse** | Follows the same mode as MIDI: press-and-hold when momentary, click-to-toggle when latched |
 | **Latch** | Note-on (or mouse press) toggles the key instead of holding it, so a scale can be tapped in one note at a time. Off on load. |
@@ -29,7 +30,7 @@ at a time).
 
 ## Testing
 
-Open `tests.html` — 59 assertions over `theory.js`, prints a pass/fail tally.
+Open `tests.html` — 60 assertions over `theory.js` and static data, prints a pass/fail tally.
 
 **When editing, disable the cache.** Chrome caches `file://` scripts per file and
 will serve a stale `js/` file next to freshly-loaded ones — a control that
