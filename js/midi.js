@@ -4,6 +4,8 @@
 
   const CC_NAMES = {1:"mod wheel",7:"volume",10:"pan",11:"expression",64:"sustain pedal",120:"all sound off",121:"reset controllers",123:"all notes off"};
 
+  let latch = SP.config.latch;   // flipped by the toolbar button via setLatch()
+
   // Octave-suffixed on purpose: this is console output only. The on-screen
   // display uses pitch classes without octaves -- don't "fix" this to match.
   function noteName(n){ return SP.data.NAMES[n % 12] + (Math.floor(n / 12) - 1); }
@@ -34,14 +36,26 @@
     }
     const st = e.data[0], note = e.data[1], vel = e.data[2];
     const cmd = st & 0xF0;
+    const on  = cmd === 0x90 && vel > 0;
+    const off = cmd === 0x80 || (cmd === 0x90 && vel === 0);
+    // Latched: note-on flips the key and note-off is ignored, so a scale can
+    // be tapped in one note at a time instead of held down -- the same
+    // behavior mouse clicks already have.
     // Momentary: the display mirrors what is physically held.
-    if (cmd === 0x90 && vel > 0) SP.state.set(note, true);
-    else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) SP.state.set(note, false);
+    if (latch){ if (on) SP.state.toggle(note); }
+    else if (on) SP.state.set(note, true);
+    else if (off) SP.state.set(note, false);
   }
 
   SP.midi = {
 
     describeMIDI: describeMIDI,   // exposed for poking at from the console
+
+    // Also exposed so both can be exercised from the console without the
+    // keyboard plugged in:  SP.midi.onMIDI({data:[0x90,60,100]})
+    onMIDI: onMIDI,
+
+    setLatch(on){ latch = on; },
 
     init(){
       const statusEl = document.getElementById("midiStatus");

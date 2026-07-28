@@ -5,6 +5,7 @@ var SP = {};
 SP.config = {
   LOW: 36, HIGH: 96,   // MIDI range of the on-screen keyboard (C2-C7, 61 keys)
   showLabels: true,    // initial state of the "Note labels" checkbox
+  latch: false,        // MIDI note-on toggles instead of held (entering scales)
   logMIDI: true        // decode every incoming MIDI message to the console
 };
 

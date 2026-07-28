@@ -9,6 +9,16 @@
 
   SP.midi.init();
 
+  const latchBtn = document.getElementById("latchBtn");
+  let latchOn = SP.config.latch;
+  function applyLatch(){
+    SP.midi.setLatch(latchOn);
+    latchBtn.classList.toggle("on", latchOn);
+    latchBtn.textContent = "Latch: " + (latchOn ? "on" : "off");
+  }
+  latchBtn.addEventListener("click", () => { latchOn = !latchOn; applyLatch(); });
+  applyLatch();
+
   document.getElementById("clearBtn").addEventListener("click", () => SP.state.clear());
 
   const labelsToggle = document.getElementById("labelsToggle");
