@@ -11,14 +11,23 @@
   <h1>Scale and chord piano</h1>
   <p id="midiStatus" class="midi-status">MIDI: waiting for permission&hellip;</p>
   <div class="toolbar">
-    <button id="latchBtn" title="Latched: tap a MIDI key to leave it on, tap again to turn it off">Latch: off</button>
-    <button id="flatsBtn" title="Spell accidentals as flats (Db, Eb...) instead of sharps (C#, D#...)">Flats: off</button>
+    <label class="toggle" for="latchBtn" title="Latched: tap a MIDI key to leave it on, tap again to turn it off">
+      <input type="checkbox" id="latchBtn" class="toggle-input">
+      <span class="toggle-text" id="latchText">Latch </span>
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+    </label>
+    <label class="toggle" for="flatsBtn" title="Spell accidentals as flats (Db, Eb...) instead of sharps (C#, D#...)">
+      <input type="checkbox" id="flatsBtn" class="toggle-input">
+      <span class="toggle-text flats-option flats-option-left">b</span>
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="toggle-text flats-option flats-option-right">#</span>
+    </label>
     <button id="clearBtn">Clear</button>
-    <label><input type="checkbox" id="labelsToggle" checked> Note labels</label>
+    <label class="labels-toggle"><input type="checkbox" id="labelsToggle" checked> Note labels</label>
   </div>
   <div id="kb" class="piano-wrap"></div>
   <div class="results">
-    <div class="results-col">
+    <div class="results-col col-left">
       <p class="field-label">Notes</p>
       <p id="notesOut" class="field-value">&mdash;</p>
       <div id="degRow" style="display:none;">
@@ -26,7 +35,7 @@
         <p id="degOut" class="field-value"></p>
       </div>
     </div>
-    <div class="results-col">
+    <div class="results-col col-right">
       <p class="field-label">Detected</p>
       <p id="nameOut" class="field-value">&mdash;</p>
       <p id="suspectOut" class="field-sub" style="display:none;"></p>

@@ -9,27 +9,26 @@
 
   SP.midi.init();
 
-  const latchBtn = document.getElementById("latchBtn");
+  const latchToggle = document.getElementById("latchBtn");
+  const latchText = document.getElementById("latchText");
   let latchOn = SP.config.latch;
   function applyLatch(){
     SP.midi.setLatch(latchOn);
     SP.keyboard.setLatch(latchOn);
-    latchBtn.classList.toggle("on", latchOn);
-    latchBtn.textContent = "Latch: " + (latchOn ? "on" : "off");
+    latchToggle.checked = latchOn;
   }
-  latchBtn.addEventListener("click", () => { latchOn = !latchOn; applyLatch(); });
+  latchToggle.addEventListener("change", () => { latchOn = latchToggle.checked; applyLatch(); });
   applyLatch();
 
-  const flatsBtn = document.getElementById("flatsBtn");
+  const flatsToggle = document.getElementById("flatsBtn");
   let flatsOn = SP.config.flats;
   function applyFlats(){
     SP.keyboard.setFlats(flatsOn);
     SP.results.setFlats(flatsOn);
-    flatsBtn.classList.toggle("on", flatsOn);
-    flatsBtn.textContent = "Flats: " + (flatsOn ? "on" : "off");
+    flatsToggle.checked = flatsOn;
     SP.state.notify();   // re-render the held chord in the new spelling immediately
   }
-  flatsBtn.addEventListener("click", () => { flatsOn = !flatsOn; applyFlats(); });
+  flatsToggle.addEventListener("change", () => { flatsOn = flatsToggle.checked; applyFlats(); });
   applyFlats();
 
   document.getElementById("clearBtn").addEventListener("click", () => SP.state.clear());
