@@ -1,10 +1,32 @@
 // The only file that runs anything on load. Everything above it just defines.
 (function(){
 
+  const themePicker = document.querySelector(".theme-picker");
+  const themeTrigger = document.querySelector(".theme-trigger");
   const themeButtons = document.querySelectorAll(".theme-swatch");
   const themeVars = { page:"--page", text:"--text-primary", strong:"--text-strong", dim:"--text-secondary",
                       faint:"--text-muted", rule:"--border", accent:"--accent", accentHi:"--accent-hi",
                       onAccent:"--on-accent", second:"--second" };
+  let themeHoverTimer = null;
+
+  function showThemeSwatches(){
+    if (themeHoverTimer) clearTimeout(themeHoverTimer);
+    themePicker.classList.add("is-visible");
+    themeTrigger.setAttribute("aria-expanded", "true");
+  }
+
+  function hideThemeSwatches(){
+    if (themeHoverTimer) clearTimeout(themeHoverTimer);
+    themeHoverTimer = setTimeout(() => {
+      themePicker.classList.remove("is-visible");
+      themeTrigger.setAttribute("aria-expanded", "false");
+    }, 3000);
+  }
+
+  themePicker.addEventListener("mouseenter", showThemeSwatches);
+  themePicker.addEventListener("mouseleave", hideThemeSwatches);
+  themePicker.addEventListener("focusin", showThemeSwatches);
+  themePicker.addEventListener("focusout", hideThemeSwatches);
   function applyTheme(name){
     const theme = SP.data.THEMES[name];
     const root = document.documentElement;
@@ -17,6 +39,7 @@
     button.addEventListener("click", () => {
       localStorage.setItem("piano-theme", button.dataset.theme);
       applyTheme(button.dataset.theme);
+      showThemeSwatches();
     });
   });
   applyTheme(localStorage.getItem("piano-theme") || SP.config.theme);
