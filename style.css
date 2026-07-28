@@ -1,35 +1,36 @@
 :root{
-  --surface-0:#faf9f5;
-  --surface-1:#f0eee6;
+  --surface-0:#f6f4fb;
+  --surface-1:#ebe6f7;
   --surface-2:#ffffff;
-  --text-primary:#1a1a17;
-  --text-secondary:#5f5e5a;
-  --text-muted:#888780;
-  --border:#d3d1c7;
-  --border-strong:#b4b2a9;
-  --key-black:#2c2c2a;
-  --key-black-text:#f0eee6;
-  --accent:#185fa5;
-  --accent-bg:#e6f1fb;
-  --accent-text:#0c447c;
+  --text-primary:#1c1730;
+  --text-secondary:#5b5470;
+  --text-muted:#8a8299;
+  --border:#ddd6ee;
+  --border-strong:#b7abd6;
+  --key-black:#211a35;
+  --key-black-text:#e4defa;
+  --key-white-text:#5b5470;
+  --accent:#6d28d9;
+  --accent-bg:#f1e9fc;
+  --accent-text:#4c1d95;
   --on-accent:#ffffff;
   --radius:8px;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --surface-0:#1f1e1b;
-    --surface-1:#2c2b28;
-    --surface-2:#383733;
-    --text-primary:#f0eee6;
-    --text-secondary:#b4b2a9;
-    --text-muted:#888780;
-    --border:#444441;
-    --border-strong:#5f5e5a;
-    --key-black:#141412;
-    --key-black-text:#b4b2a9;
-    --accent:#378add;
-    --accent-bg:#0c447c;
-    --accent-text:#b5d4f4;
+    --surface-0:#14111f;
+    --surface-1:#201a33;
+    --surface-2:#f3effc;
+    --text-primary:#ede9fa;
+    --text-secondary:#b6acd6;
+    --text-muted:#8f87ab;
+    --border:#3a3153;
+    --border-strong:#4f4470;
+    --key-black:#0c0a16;
+    --key-black-text:#b6acd6;
+    --accent:#9d7bf0;
+    --accent-bg:#3b2465;
+    --accent-text:#d9c9fb;
     --on-accent:#ffffff;
   }
 }
@@ -60,7 +61,7 @@ h1{font-size:22px;font-weight:500;margin:0 0 0.5rem;}
 .pkey{position:absolute;top:0;cursor:pointer;}
 .pkey.white{height:100%;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:0 0 4px 4px;}
 .pkey.black{height:60%;background:var(--key-black);border:1px solid var(--key-black);border-radius:0 0 3px 3px;z-index:2;}
-.pkey.white .klabel{color:var(--text-secondary);}
+.pkey.white .klabel{color:var(--key-white-text);}
 .pkey.black .klabel{color:var(--key-black-text);}
 .pkey.active{background:var(--accent);border-color:var(--accent);}
 .pkey.active .klabel{color:var(--on-accent);}
