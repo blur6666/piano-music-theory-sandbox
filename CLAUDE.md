@@ -138,6 +138,18 @@ the same commit clearly did.
 
 **Suspect the cache before the code.**
 
+## When to commit
+
+**If the last step of validation needs the owner, do not commit — implement,
+report, and wait for approval.** In this repo that means anything whose real
+proof is playing it on the MIDI keyboard: the browser can drive `onMIDI` and
+prove the logic, but it cannot prove the hardware. Latch mode was committed
+before that check came back; it happened to pass, but the commit was a guess.
+
+**If you can fully validate it yourself, commit without asking.** Passing
+`tests.html`, a browser smoke test, a doc edit — all self-evident, no approval
+needed. Don't manufacture check-ins for work you have actually proven.
+
 ## Known limitations (accepted, do not "fix" unless asked)
 
 - Sharps only, no flat spelling (D# never Eb).
