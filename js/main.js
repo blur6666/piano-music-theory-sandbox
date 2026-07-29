@@ -6,7 +6,7 @@
   const themeButtons = document.querySelectorAll(".theme-swatch");
   const themeVars = { page:"--page", text:"--text-primary", strong:"--text-strong", dim:"--text-secondary",
                       faint:"--text-muted", rule:"--border", accent:"--accent", accentHi:"--accent-hi",
-                      onAccent:"--on-accent", second:"--second" };
+                      onAccent:"--on-accent", second:"--second", pianoShell:"--piano-shell" };
   let themeHoverTimer = null;
 
   function showThemeSwatches(){
@@ -35,7 +35,7 @@
     themeButtons.forEach(button => button.setAttribute("aria-pressed", button.dataset.theme === name ? "true" : "false"));
   }
   themeButtons.forEach(button => {
-    button.style.background = SP.data.THEMES[button.dataset.theme].accent;
+    button.style.background = SP.data.THEMES[button.dataset.theme].icon;
     button.addEventListener("click", () => {
       localStorage.setItem("piano-theme", button.dataset.theme);
       applyTheme(button.dataset.theme);

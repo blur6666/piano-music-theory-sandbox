@@ -3,21 +3,22 @@
   --page: radial-gradient(120% 80% at 50% -10%, #1d1a16 0%, #100f0d 55%, #0b0a09 100%);
   --text-primary: #efe8db;
   --text-strong: #f8efdc;
-  --text-secondary: #8a8072;
+  --text-secondary: #676665;
   --text-muted: #5c554a;
   --border: #262219;
-  --border-strong: color-mix(in srgb, var(--border) 65%, var(--accent));
+  --border-strong: color-mix(in srgb, var(--border) 85%, var(--accent) 30%);
   --key-black: #120f0b;
   --key-black-text: #a5a098;
   --accent: #e0a13c;
   --accent-hi: #f0b555;
   --second: #9dc0ac;
-  --key-white: #f6efe2;
   --key-white-text: #786d5b;
   --on-accent: #1b140a;
-  --surface-1: color-mix(in srgb, var(--text-primary) 5%, transparent);
-  --surface-2: color-mix(in srgb, var(--text-primary) 9%, transparent);
+  --surface-1: color-mix(in srgb, var(--piano-shell) 5%, transparent);
+  --surface-2: color-mix(in srgb, var(--piano-shell) 9%, transparent);
   --radius: 12px;
+  --piano-shell: "#ff00ff";
+  --key-white: color-mix(in srgb, var(--piano-shell) 10%, #d0d0d0 90%);
 }
 
 * {
@@ -349,14 +350,6 @@ h1 {
   font: inherit;
 }
 
-/* Only up while the next note is being waited on, so it can afford to be loud. */
-.scale-hint {
-  margin: 0;
-  color: var(--accent);
-  font-size: 14px;
-  white-space: nowrap;
-}
-
 /* The open popup inherits the select's 9%-opaque --surface-2 and near-white
    --text-primary, which composites to white-on-white. Canvas/CanvasText are
    opaque and follow the color-scheme applyTheme() sets per theme. */
@@ -374,7 +367,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 20px;
   background: var(--surface-1);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
 }
 
 .piano-shell::before {
