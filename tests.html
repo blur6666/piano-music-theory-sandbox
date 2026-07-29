@@ -63,12 +63,16 @@ li .got{display:block;color:var(--text-muted);font-size:13px;}
   eq("unrecognised set guesses the bass as suspected root",
      T.detect([0,1,6], 0).label, "C ? (unknown chord)");
 
-  // scaleNotesNearMiddleC() -- one ascending octave, tonic nearest C4.
-  eq("C major spans C4 to C5",
-     T.scaleNotesNearMiddleC(0, "0,2,4,5,7,9,11").join(","),
+  // scaleNotesFrom() -- one ascending octave from the struck key, closing on
+  // the root an octave up. The player's octave is honoured, not normalised.
+  eq("C major from C4 spans C4 to C5",
+     T.scaleNotesFrom(60, "0,2,4,5,7,9,11").join(","),
      "60,62,64,65,67,69,71,72");
-  eq("F# chooses the upper midpoint near C4",
-     T.scaleNotesNearMiddleC(6, "0,2,4,6,7,9,11").join(","),
+  eq("the same scale from a different octave just transposes",
+     T.scaleNotesFrom(48, "0,2,4,5,7,9,11").join(","),
+     "48,50,52,53,55,57,59,60");
+  eq("F# major from F#4 closes on F#5",
+     T.scaleNotesFrom(66, "0,2,4,6,7,9,11").join(","),
      "66,68,70,72,73,75,77,78");
 
   // detect() -- scales. >=5 notes prefers the scale dictionary.

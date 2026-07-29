@@ -44,9 +44,7 @@ body {
 .midi-controls,
 .theme-swatches,
 .toolbar,
-.scale-picker,
-.key-picker,
-.key-chips {
+.scale-picker {
   display: flex;
   align-items: center;
 }
@@ -154,6 +152,11 @@ h1 {
   outline-offset: 2px;
 }
 
+/* Author display:flex beats the UA [hidden] rule, so say it explicitly. */
+.midi-status[hidden] {
+  display: none;
+}
+
 .midi-status {
   display: flex;
   align-items: center;
@@ -199,7 +202,7 @@ h1 {
 .toolbar {
   flex-wrap: wrap;
   gap: 20px;
-  margin: 12px 0 38px;
+  margin: 12px 0 16px;
 }
 
 .toolbar button,
@@ -216,8 +219,12 @@ h1 {
 }
 
 .toolbar button {
-  padding: 0 11px;
+  padding: 0 12px;
   cursor: pointer;
+  min-height: 26px;
+  min-width: 26px;
+  font-size: 11px;
+  font-weight: bold;
 }
 
 .toolbar button:hover,
@@ -285,10 +292,10 @@ h1 {
 
 .toolbar .flats-option {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   place-items: center;
-  border-radius: 9px;
+  border-radius: var(--radius);
   color: var(--text-muted);
 }
 
@@ -307,31 +314,34 @@ h1 {
 
 #clearBtn {
   margin-left: auto;
+  /* letter-spacing trails a gap after the final R; trim the right side by
+     the same amount so the word sits optically centred. */
+  padding-right: calc(12px - 0.14em);
   color: var(--text-secondary);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-.scale-picker,
-.key-picker,
-.key-chips {
-  flex-wrap: wrap;
-}
-
 .scale-picker {
+  flex-wrap: wrap;
   gap: 16px;
-  margin: 0 0 1rem;
+  margin: 0;
 }
 
-.scale-picker label,
-.key-picker {
+.scale-picker label {
   gap: 8px;
   color: var(--text-secondary);
   font-size: 14px;
 }
 
+/* Hides the caption text only — the label itself still wraps the select. */
+.picker-label {
+  display: none;
+}
+
 .scale-picker select {
-  padding: 5px 8px;
+  height: 32px;
+  padding: 0 8px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--surface-2);
@@ -339,30 +349,20 @@ h1 {
   font: inherit;
 }
 
-.key-chips {
-  gap: 6px;
+/* Only up while the next note is being waited on, so it can afford to be loud. */
+.scale-hint {
+  margin: 0;
+  color: var(--accent);
+  font-size: 14px;
+  white-space: nowrap;
 }
 
-.key-chip {
-  min-width: 32px;
-  padding: 3px 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface-1);
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.key-chip:hover {
-  border-color: var(--border-strong);
-}
-
-.key-chip.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-accent);
+/* The open popup inherits the select's 9%-opaque --surface-2 and near-white
+   --text-primary, which composites to white-on-white. Canvas/CanvasText are
+   opaque and follow the color-scheme applyTheme() sets per theme. */
+.scale-picker option {
+  background-color: Canvas;
+  color: CanvasText;
 }
 
 .piano-shell {
@@ -622,10 +622,6 @@ h1 {
 
   .toolbar {
     margin: 27px 0 30px;
-  }
-
-  #clearBtn {
-    margin-left: 0;
   }
 
   .piano-shell {

@@ -9,11 +9,13 @@
     // midi.js's console noteName() is deliberately exempt.
     spell(pc, flats){ return (flats ? D.FLATS : D.NAMES)[pc]; },
 
-    // One ascending octave of a scale, rooted as close to middle C as possible.
-    // Math.round deliberately resolves the F#/Gb midpoint upward to F#4 (66).
-    scaleNotesNearMiddleC(root, ivStr){
-      const base = root + 12 * Math.round((60 - root) / 12);
-      return ivStr.split(",").map(Number).concat(12).map(i => base + i);
+    // One ascending octave of a scale from an actual key on the keyboard:
+    // the root the player struck, its scale tones above it, and the root
+    // again an octave up to close the run. Takes a MIDI note, not a pitch
+    // class -- the octave the player chose is the octave it draws in, even
+    // if that runs off the top of the on-screen range.
+    scaleNotesFrom(root, ivStr){
+      return ivStr.split(",").map(Number).concat(12).map(i => root + i);
     },
 
     // Degrees of a note set against an assumed root, for sets no dictionary

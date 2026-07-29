@@ -66,8 +66,8 @@
   const flatsToggle = document.getElementById("flatsBtn");
   let flatsOn = SP.config.flats;
   const scaleSelect = document.getElementById("scaleSelect");
-  const keyChips = document.getElementById("keyChips");
-  let selectedRoot = null;
+  const scaleHint = document.getElementById("scaleHint");
+  let latchBeforeArm = latchOn;
 
   for (const [name] of SP.data.SCALES){
     const option = document.createElement("option");
@@ -76,36 +76,42 @@
     scaleSelect.appendChild(option);
   }
 
-  function loadScale(){
-    if (scaleSelect.value === "" || selectedRoot === null) return;
+  // Picking a scale doesn't draw anything yet -- it arms the next note played
+  // (MIDI or mouse, SP.state.arm doesn't care which) as the root. The dropdown
+  // snaps back to the placeholder so the same scale can be re-rooted without
+  // detouring through another one; what is on the keyboard is named in the
+  // Detected panel anyway.
+  function armScale(){
+    if (scaleSelect.value === "") return;
+    const ivStr = SP.data.SCALES[scaleSelect.value][1];
+    scaleSelect.value = "";
+    scaleHint.hidden = false;
+    // Latched now, before the root is struck, not after it lands. A momentary
+    // mouse press would still be holding the root when the scale drew, and its
+    // mouseup would knock that first note straight back out.
+    if (!SP.state.capture) latchBeforeArm = latchOn;
     latchOn = true;
     applyLatch();
-    SP.state.replace(SP.theory.scaleNotesNearMiddleC(selectedRoot, SP.data.SCALES[scaleSelect.value][1]));
+    SP.state.arm(root => {
+      scaleHint.hidden = true;
+      SP.state.replace(SP.theory.scaleNotesFrom(root, ivStr));
+    });
   }
 
-  function renderKeyChips(){
-    keyChips.replaceChildren();
-    for (let pc = 0; pc < 12; pc++){
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "key-chip" + (pc === selectedRoot ? " active" : "");
-      chip.textContent = SP.theory.spell(pc, flatsOn);
-      chip.setAttribute("aria-pressed", pc === selectedRoot ? "true" : "false");
-      chip.addEventListener("click", () => {
-        selectedRoot = pc;
-        renderKeyChips();
-        loadScale();
-      });
-      keyChips.appendChild(chip);
-    }
+  function cancelScale(){
+    if (!SP.state.capture) return;
+    SP.state.disarm();
+    scaleHint.hidden = true;
+    latchOn = latchBeforeArm;
+    applyLatch();
   }
 
-  scaleSelect.addEventListener("change", loadScale);
+  scaleSelect.addEventListener("change", armScale);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") cancelScale(); });
 
   function applyFlats(){
     SP.keyboard.setFlats(flatsOn);
     SP.results.setFlats(flatsOn);
-    renderKeyChips();
     flatsToggle.checked = !flatsOn;
     SP.state.notify();   // re-render the held chord in the new spelling immediately
   }

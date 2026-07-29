@@ -26,12 +26,11 @@ at a time).
 | **Flats** | Spells accidentals as Db/Eb instead of C#/D#, on the keys and in the readout. Off on load. |
 | **Clear** | Empties the selection, latched notes included |
 | **Note labels** | Shows/hides the note name on each key |
-| **Scale** | Select a scale; after selecting a key, loads one ascending octave of that scale |
-| **Key** | Choose one root chip. The scale starts at the matching root nearest middle C and ends at its octave. |
+| **Scale** | Select a scale, then play the note you want as its root — by MIDI or by clicking a key. One ascending octave lights up from that exact key to the same note an octave above. Latch switches on so the scale stays lit. **Esc** cancels while it's waiting. |
 
 ## Testing
 
-Open `tests.html` — 60 assertions over `theory.js` and static data, prints a pass/fail tally.
+Open `tests.html` — 61 assertions over `theory.js` and static data, prints a pass/fail tally.
 
 **When editing, disable the cache.** Chrome caches `file://` scripts per file and
 will serve a stale `js/` file next to freshly-loaded ones — a control that

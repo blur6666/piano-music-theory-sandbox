@@ -29,6 +29,8 @@ tests.html  assertions on theory    js/state.js        selection Set + subscribe
 
 `SP.state` holds the selection `Set` plus a listener list. Inputs (mouse in `keyboard-ui.js`, MIDI in `midi.js`) call `set`/`toggle`/`clear`; views (`keyboard.repaint`, `results.render`) `subscribe`. **Inputs and views must not reference each other** — a new view is a new file that subscribes and nothing else changes. Views read the Set they're handed; they never mutate it.
 
+**`state.arm(fn)` is the one place to intercept input.** Every input path bottoms out in `state.set`, so a one-shot capture there catches mouse and MIDI at once: the next note-on goes to `fn` instead of the selection and the arm is spent (`disarm()` to cancel; releases are ignored, never mistaken for a choice). The scale-root picker is built entirely on this and touches neither input file. **Anything that needs "the next note the player hits" goes here, not into `midi.js` and `keyboard-ui.js` twice.**
+
 ### Why things are the way they are
 
 Read the files for what the code does. This section is only for decisions the code can't tell you, and for traps that look like bugs.
@@ -46,7 +48,7 @@ Read the files for what the code does. This section is only for decisions the co
 
 ## Testing
 
-Open `tests.html`; it prints a pass/fail tally. Smoke test for UI changes: click C-E-G → "C major — root position"; play a scale → name, degrees, chips; console decoding; Clear; Latch **via both mouse and MIDI**; note-labels.
+Open `tests.html`; it prints a pass/fail tally. Smoke test for UI changes: click C-E-G → "C major — root position"; play a scale → name, degrees, chips; console decoding; Clear; Latch **via both mouse and MIDI**; note-labels; pick a scale then root it **both by clicking a key and by MIDI**, and Esc out of an armed pick.
 
 The whole MIDI input path runs from the console, no hardware needed:
 
@@ -56,6 +58,16 @@ SP.midi.onMIDI({data:[0x80,60,0]});     // note off C4
 ```
 
 `SP.midi.describeMIDI(bytes)` is exported for the same reason.
+
+### Agent page viewing
+
+Chrome automation blocks `file://` URLs. To inspect UI/CSS and avoid hallucinations, serve temporarily:
+
+```
+python -m http.server 8731 --bind 127.0.0.1
+```
+
+(Note: this temporary viewing harness does **not** violate the project's "no local servers" rule. The app itself remains serverless and double-clickable.)
 
 ### Before debugging a dead control: suspect the cache
 

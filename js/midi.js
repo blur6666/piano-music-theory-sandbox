@@ -59,30 +59,34 @@
 
     init(){
       const statusEl = document.getElementById("midiStatus");
+      // Starts empty and hidden; any state worth reporting unhides it.
+      const setStatus = (msg, ok) => {
+        statusEl.textContent = msg;
+        statusEl.hidden = false;
+        statusEl.classList.toggle("ok", !!ok);
+      };
       if (!navigator.requestMIDIAccess){
-        statusEl.textContent = "MIDI: not supported in this browser (use Chrome or Edge)";
+        setStatus("MIDI: not supported in this browser (use Chrome or Edge)");
         return;
       }
       navigator.requestMIDIAccess().then(acc => {
         const hook = inp => {
           inp.onmidimessage = onMIDI;
           inp.open().then(
-            () => { statusEl.textContent = "MIDI: port open — " + inp.name + " (waiting for notes)"; statusEl.classList.add("ok"); },
-            () => { statusEl.textContent = "MIDI: could not open " + inp.name + " — port busy? Close your DAW / Roland apps and reload"; statusEl.classList.remove("ok"); }
+            () => setStatus("MIDI: port open — " + inp.name + " (waiting for notes)", true),
+            () => setStatus("MIDI: could not open " + inp.name + " — port busy? Close your DAW / Roland apps and reload")
           );
         };
         acc.inputs.forEach(hook);
         const names = [...acc.inputs.values()].map(i => i.name).join(", ");
-        statusEl.textContent = names ? "MIDI: connected to " + names : "MIDI: no device found, plug in and reload";
-        statusEl.classList.toggle("ok", !!names);
+        setStatus(names ? "MIDI: connected to " + names : "MIDI: no device found, plug in and reload", !!names);
         acc.onstatechange = e => {
           if (e.port.type === "input" && e.port.state === "connected"){
             hook(e.port);
-            statusEl.textContent = "MIDI: connected to " + e.port.name;
-            statusEl.classList.add("ok");
+            setStatus("MIDI: connected to " + e.port.name, true);
           }
         };
-      }, () => { statusEl.textContent = "MIDI: permission denied"; });
+      }, () => setStatus("MIDI: permission denied"));
     }
   };
 })();
