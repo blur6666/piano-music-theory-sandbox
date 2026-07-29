@@ -42,8 +42,8 @@
     // be tapped in one note at a time instead of held down. Mouse input honors
     // the same flag (see keyboard-ui.js) -- kept in sync by main.js.
     // Momentary: the display mirrors what is physically held.
-    if (latch){ if (on) SP.state.toggle(note); }
-    else if (on) SP.state.set(note, true);
+    if (latch){ if (on) SP.state.toggle(note, vel); }
+    else if (on) SP.state.set(note, true, vel);
     else if (off) SP.state.set(note, false);
   }
 

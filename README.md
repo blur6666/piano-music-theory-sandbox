@@ -23,6 +23,8 @@ at a time).
 | **MIDI keyboard** | Momentary by default — the display mirrors what's physically held |
 | **Mouse** | Follows the same mode as MIDI: press-and-hold when momentary, click-to-toggle when latched |
 | **Latch** | Note-on (or mouse press) toggles the key instead of holding it, so a scale can be tapped in one note at a time. Off on load. |
+| **Sound** | Plays a synthesized piano-like note. Notes decay naturally and release faster when the key is released; latch mode releases on the second tap. |
+| **Sustain** | Leaves synthesized notes on their natural decay instead of shortening them on note-off. On by default. |
 | **Flats** | Spells accidentals as Db/Eb instead of C#/D#, on the keys and in the readout. Off on load. |
 | **Clear** | Empties the selection, latched notes included |
 | **Note labels** | Shows/hides the note name on each key |
@@ -31,6 +33,11 @@ at a time).
 ## Testing
 
 Open `tests.html` — 61 assertions over `theory.js` and static data, prints a pass/fail tally.
+
+For sound, click **Sound** on, click an on-screen key, then test Sustain on and
+off, latch toggling, chords, MIDI velocity, and the MIDI note-off path from the
+console. Click **Connect MIDI** before using hardware so Chrome can unlock the
+audio context.
 
 **When editing, disable the cache.** Chrome caches `file://` scripts per file and
 will serve a stale `js/` file next to freshly-loaded ones — a control that
@@ -56,6 +63,7 @@ js/
   data.js         config knobs + all static tables
   theory.js       detect / diatonic / keyContext — pure, no DOM
   state.js        the selection Set + subscribe/notify
+  audio.js        polyphonic Web Audio synthesis
   midi.js         Web MIDI hookup, message decoding, console log
   keyboard-ui.js  builds and repaints the piano
   results-ui.js   renders the detection panel
@@ -64,6 +72,10 @@ js/
 
 Plain `<script>` tags sharing one global `SP`, not ES modules — `import` doesn't
 work over `file://`, and this has to open by double-clicking.
+
+Sound uses the browser's Web Audio API and needs a user interaction before MIDI
+notes can be heard. Click **Connect MIDI** once, or click an on-screen key, to
+unlock the audio context.
 
 To add a chord or scale, add a row to `data.js`. To add a view, add a file that
 subscribes to `SP.state`. Details and the reasoning are in `CLAUDE.md`.

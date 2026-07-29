@@ -5,6 +5,7 @@ SP.state = {
 
   sel: new Set(),      // MIDI note numbers. Listeners read it, never mutate it.
   listeners: [],
+  inputListeners: [],  // note-on/off consumers, separate from selection views
 
   // While armed, the next note-on goes to this function instead of the
   // selection, and the arm is spent. Every input lands in set(), so one hook
@@ -14,13 +15,16 @@ SP.state = {
 
   subscribe(fn){ this.listeners.push(fn); },
 
+  subscribeInput(fn){ this.inputListeners.push(fn); },
+
   notify(){ this.listeners.forEach(fn => fn(this.sel)); },
 
   arm(fn){ this.capture = fn; },
 
   disarm(){ this.capture = null; },
 
-  set(note, on){
+  set(note, on, velocity){
+    this.inputListeners.forEach(fn => fn(note, on, velocity));
     if (this.capture){
       if (!on) return;              // a release is not a choice of note
       const fn = this.capture;
@@ -37,7 +41,7 @@ SP.state = {
     this.notify();
   },
 
-  toggle(note){ this.set(note, !this.sel.has(note)); },
+  toggle(note, velocity){ this.set(note, !this.sel.has(note), velocity); },
 
   clear(){ this.sel.clear(); this.notify(); }
 };

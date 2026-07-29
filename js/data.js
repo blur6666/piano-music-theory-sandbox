@@ -5,7 +5,11 @@ var SP = {};
 SP.config = {
   LOW: 36, HIGH: 96,   // MIDI range of the on-screen keyboard (C2-C7, 61 keys)
   showLabels: true,    // initial state of the "Note labels" checkbox
-  latch: true,      // MIDI note-on toggles instead of held (entering scales)
+  latch: false,     // MIDI note-on toggles instead of held (entering scales)
+  sound: true,         // play synthesized notes from mouse and MIDI input
+  soundVolume: 0.32,   // master volume for the synthesized output
+  mouseVelocity: 100,  // fixed velocity used by the on-screen keyboard
+  sustain: true,       // let synthesized notes finish their natural decay
   flats: false,        // initial state of the "Flats" button; per-pitch-class swap, not key-aware
   logMIDI: true,       // decode every incoming MIDI message to the console
   theme: "brass"       // visual palette; swatches reset to this choice on reload

@@ -5,7 +5,7 @@ Local music theory study tool: on-screen 5-octave piano driven by a MIDI keyboar
 ## Hard constraints
 
 - **KISS.** No support beyond the owner's use case: Desktop Windows PC. No resilience, no graceful degradation, no edge-case armor. He tinkers and fixes breakage himself.
-- **No audio.** Silent by design. But might be added later (lol)
+- **Synthesized audio.** Notes use the browser Web Audio API; there are no external audio assets.
 - **Display conventions** (user-specified): note names without octave numbers, deduplicated to pitch classes; intervals as proper names ("major 3rd"), never W/H or semitone counts; chords show inversion text.
 
 ## Architecture
@@ -14,6 +14,7 @@ Local music theory study tool: on-screen 5-octave piano driven by a MIDI keyboar
 index.html  shell + script tags     js/data.js         SP.config + static tables
 style.css   all styling             js/theory.js       detect/diatonic/keyContext, pure
 tests.html  assertions on theory    js/state.js        selection Set + subscribe/notify
+                                    js/audio.js        polyphonic Web Audio synthesis
                                     js/midi.js         Web MIDI, decoding, console log
                                     js/keyboard-ui.js  builds + repaints the piano
                                     js/results-ui.js   renders the detection panel
@@ -26,7 +27,7 @@ tests.html  assertions on theory    js/state.js        selection Set + subscribe
 
 ### The contract that matters
 
-`SP.state` holds the selection `Set` plus a listener list. Inputs (mouse in `keyboard-ui.js`, MIDI in `midi.js`) call `set`/`toggle`/`clear`; views (`keyboard.repaint`, `results.render`) `subscribe`. **Inputs and views must not reference each other** — a new view is a new file that subscribes and nothing else changes. Views read the Set they're handed; they never mutate it.
+`SP.state` holds the selection `Set` plus listener lists. Inputs (mouse in `keyboard-ui.js`, MIDI in `midi.js`) call `set`/`toggle`/`clear`; views (`keyboard.repaint`, `results.render`) `subscribe`. Audio consumes note events through `subscribeInput`, not selection repaint events. **Inputs and views must not reference each other** — a new view is a new file that subscribes and nothing else changes. Views read the Set they're handed; they never mutate it.
 
 **`state.arm(fn)` is the one place to intercept input.** Every input path bottoms out in `state.set`, so a one-shot capture there catches mouse and MIDI at once: the next note-on goes to `fn` instead of the selection and the arm is spent (`disarm()` to cancel; releases are ignored, never mistaken for a choice). The scale-root picker is built entirely on this and touches neither input file. **Anything that needs "the next note the player hits" goes here, not into `midi.js` and `keyboard-ui.js` twice.**
 
@@ -44,10 +45,11 @@ Read the files for what the code does. This section is only for decisions the co
 - **`theory.keyContext` owns all key inference.** Diatonic for a scale, "chords in the key of X" for major/minor-family chords, a **"Possible keys" chip list** for dim/aug/sus/dominant (fixed semitone offsets in `data.AMBIGUOUS_KEYS`, reusing the chip renderer with one candidate key per chip instead of one diatonic chord), else `null`. The `null` cases — power chord, minor major 7, non-7-note scales — have genuinely nothing to show; that is not an oversight. **New key-inference rules go here, not in `results-ui.js`.**
 - **`keyboard-ui.js` repaints in full** from the Set on every change, no bookkeeping. Momentary mouse presses release on `mouseup` **anywhere on the page**, so a cursor that drifts off the key before release can't strand a note on.
 - **Latch** (`config.latch`, off by default) toggles on note-on and ignores note-off; momentary adds on note-on and removes on note-off. Mouse and MIDI share one latch flag, mirrored into each module by `main.js`'s `applyLatch`. Switching modes deliberately leaves lit notes alone. `describeMIDI`'s `noteName()` includes an octave **on purpose** — console only, exempt from the display convention.
+- **Sound** (`config.sound`, `config.sustain`) is synthesized in `audio.js`. Sustain leaves each voice on its natural decay and ignores logical note-off; turning Sustain off releases active voices and makes future note-offs shorten the sound.
 
 ## Testing
 
-Open `tests.html`; it prints a pass/fail tally. Smoke test for UI changes: click C-E-G → "C major — root position"; play a scale → name, degrees, chips; console decoding; Clear; Latch **via both mouse and MIDI**; note-labels; pick a scale then root it **both by clicking a key and by MIDI**, and Esc out of an armed pick.
+Open `tests.html`; it prints a pass/fail tally. Smoke test for UI changes: click C-E-G → "C major — root position"; play a scale → name, degrees, chips; console decoding; Clear; Latch **via both mouse and MIDI**; Sound and Sustain via mouse and MIDI, including note-off behavior and velocity; note-labels; pick a scale then root it **both by clicking a key and by MIDI**, and Esc out of an armed pick.
 
 The whole MIDI input path runs from the console, no hardware needed:
 

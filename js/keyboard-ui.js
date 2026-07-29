@@ -7,8 +7,8 @@
   let flats = C.flats;   // spelling of the key labels only; see the loop in init()
 
   function press(m){
-    if (latch) SP.state.toggle(m);
-    else { mouseHeld.add(m); SP.state.set(m, true); }
+    if (latch) SP.state.toggle(m, C.mouseVelocity);
+    else { mouseHeld.add(m); SP.state.set(m, true, C.mouseVelocity); }
   }
 
   // Bound to window, not the key, so a release anywhere on the page --

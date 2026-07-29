@@ -49,8 +49,36 @@
 
   SP.state.subscribe(sel => SP.keyboard.repaint(sel));
   SP.state.subscribe(sel => SP.results.render(sel));
+  SP.state.subscribeInput((note, on, velocity) => SP.audio.handle(note, on, velocity));
 
-  document.getElementById("addMidiBtn").addEventListener("click", () => SP.midi.init());
+  document.getElementById("addMidiBtn").addEventListener("click", () => {
+    SP.audio.unlock();
+    SP.midi.init();
+  });
+
+  const soundToggle = document.getElementById("soundToggle");
+  let soundOn = SP.config.sound;
+  function applySound(){
+    SP.audio.setEnabled(soundOn);
+    soundToggle.checked = soundOn;
+  }
+  soundToggle.addEventListener("change", () => {
+    soundOn = soundToggle.checked;
+    applySound();
+  });
+  applySound();
+
+  const sustainToggle = document.getElementById("sustainToggle");
+  let sustainOn = SP.config.sustain;
+  function applySustain(){
+    SP.audio.setSustain(sustainOn);
+    sustainToggle.checked = sustainOn;
+  }
+  sustainToggle.addEventListener("change", () => {
+    sustainOn = sustainToggle.checked;
+    applySustain();
+  });
+  applySustain();
 
   const latchToggle = document.getElementById("latchBtn");
   const latchText = document.getElementById("latchText");
@@ -118,7 +146,10 @@
   flatsToggle.addEventListener("change", () => { flatsOn = !flatsToggle.checked; applyFlats(); });
   applyFlats();
 
-  document.getElementById("clearBtn").addEventListener("click", () => SP.state.clear());
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    SP.audio.releaseAll();
+    SP.state.clear();
+  });
 
   const labelsToggle = document.getElementById("labelsToggle");
   labelsToggle.checked = SP.config.showLabels;
