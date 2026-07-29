@@ -6,7 +6,6 @@ Local music theory study tool: on-screen 5-octave piano driven by a MIDI keyboar
 
 - **KISS.** No support beyond the owner's use case: Desktop Windows PC. No resilience, no graceful degradation, no edge-case armor. He tinkers and fixes breakage himself.
 - **No audio.** Silent by design. But might be added later (lol)
-- **Must open by double-clicking `index.html`** off the filesystem in Chrome. No server, no build step, no dependencies.
 - **Display conventions** (user-specified): note names without octave numbers, deduplicated to pitch classes; intervals as proper names ("major 3rd"), never W/H or semitone counts; chords show inversion text.
 
 ## Architecture
