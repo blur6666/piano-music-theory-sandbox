@@ -56,7 +56,7 @@ SP.data = {
     sand: {
       name: "Sand & indigo", dark: false,
       page: "radial-gradient(120% 80% at 50% -10%, #f6efe0 0%, #ece0c9 55%, #e0d2b7 100%)",
-      text: "#2c2740", strong: "#1b1730", dim: "#7a7186", faint: "a#817274", rule: "#d6c7a9",
+      text: "#2c2740", strong: "#1b1730", dim: "#7a7186", faint: "#817274", rule: "#d6c7a9",
       accent: "#3b3a8f", accentHi: "#5150ad", onAccent: "#f7f4ea", second: "#a1622a",
       pianoShell: "#ffdeaa", icon: "#ffdeaa"
     },
@@ -65,7 +65,7 @@ SP.data = {
       page: "radial-gradient(120% 80% at 50% -10%, #21202a 0%, #14141a 55%, #0c0c11 100%)",
       text: "#e4e1ea", strong: "#f9f6ff", dim: "#8b8798", faint: "#5b5769", rule: "#272533",
       accent: "#ff3d8b", accentHi: "#ff6aa5", onAccent: "#1a0a13", second: "#5fd8d0",
-      pianoShell: "#6b00a1", icon: "#ff3d8b"
+      pianoShell: "#6b00a1", icon: "#ff3d8b"f
     }
   },
 
