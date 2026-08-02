@@ -65,7 +65,7 @@ SP.data = {
       page: "radial-gradient(120% 80% at 50% -10%, #21202a 0%, #14141a 55%, #0c0c11 100%)",
       text: "#e4e1ea", strong: "#f9f6ff", dim: "#8b8798", faint: "#5b5769", rule: "#272533",
       accent: "#ff3d8b", accentHi: "#ff6aa5", onAccent: "#1a0a13", second: "#5fd8d0",
-      pianoShell: "#6b00a1", icon: "#ff3d8b"f
+      pianoShell: "#6b00a1", icon: "#ff3d8b" 
     }
   },
 
