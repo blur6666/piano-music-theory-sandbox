@@ -5,6 +5,7 @@ Local music theory study tool: on-screen 5-octave piano driven by a MIDI keyboar
 ## Hard constraints
 
 - **KISS.** No support beyond the owner's use case: Desktop Windows PC. No resilience, no graceful degradation, no edge-case armor. He tinkers and fixes breakage himself.
+- **Must work opened straight from the filesystem.** Double-clicking `index.html` has to keep working. That requirement is what forces plain `<script>` tags and one global `SP` instead of ES modules — `import` doesn't load over `file://`. It is a floor, not a ceiling: a static copy is also published to GitHub Pages, which adds no build step, no dependency, and no change to the module strategy. The hosted copy is served from a **subpath** (`/piano-music-theory-sandbox/`), so every asset path stays relative — an absolute path rooted at `/` works on `file://` and breaks there.
 - **Synthesized audio.** Notes use the browser Web Audio API; there are no external audio assets.
 - **Display conventions** (user-specified): note names without octave numbers, deduplicated to pitch classes; intervals as proper names ("major 3rd"), never W/H or semitone counts; chords show inversion text.
 
@@ -68,7 +69,7 @@ Chrome automation blocks `file://` URLs. To inspect UI/CSS and avoid hallucinati
 python -m http.server 8731 --bind 127.0.0.1
 ```
 
-(Note: this temporary viewing harness does **not** violate the project's "no local servers" rule. The app itself remains serverless and double-clickable.)
+(Note: this harness is a viewing convenience, not a dependency — the app still opens by double-click. It doubles as the way to check the GitHub Pages copy, since serving from a subdirectory reproduces the subpath the hosted version runs under.)
 
 ### Before debugging a dead control: suspect the cache
 
@@ -102,4 +103,4 @@ If a change needs edits to three existing files, the layout is being fought — 
 
 ## Out of scope — do not introduce
 
-npm, bundlers, TypeScript, frameworks, linter config, CI, minification, ES modules, local servers, browsers other than Chrome/Edge. Check any temptation against: does it help one person open one local file and study theory?
+npm, bundlers, TypeScript, frameworks, linter config, CI, minification, ES modules, any server the app needs in order to run, browsers other than Chrome/Edge. Static hosting of the very same files is not an exception to this — nothing is generated and nothing is installed. Check any temptation against: does it help one person open one local file and study theory?
