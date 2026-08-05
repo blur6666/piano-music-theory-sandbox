@@ -48,6 +48,10 @@
   // real knobs -- keyboard-ui derives every width from them -- so narrowing
   // the range is the entire mobile adaptation. Decided once, here, before
   // init() builds the keys: no resize listener, nothing rebuilds mid-session.
+  // C3-C5 puts middle C dead centre, which keeps the muddy bottom octave and
+  // the shrill top two off the screen. That leaves one octave cut below and
+  // two above -- centred on middle C, not on the full C2-C7 range. The
+  // asymmetry is deliberate; it is chosen for pitch, not for symmetry.
   if (window.matchMedia("(max-width: 560px)").matches){
     SP.config.LOW = 48;    // C3
     SP.config.HIGH = 72;   // C5
