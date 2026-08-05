@@ -5,14 +5,25 @@ hardware MIDI keyboard, showing live what I'm holding: note names,
 chord/scale detection with inversion, the degree formula, and the diatonic
 chords.
 
-Personal tool. No build step, no dependencies, no server.
+**[Open the live version →](https://blur6666.github.io/piano-music-theory-sandbox/)**
+
+**A MIDI keyboard is optional.** The mouse follows the same mode as MIDI —
+press-and-hold when momentary, click-to-toggle when latched — so chord and scale
+detection works in full by clicking the on-screen keys.
+
+Personal tool. No build step, no dependencies, no backend — just static files.
 
 ## Running it
 
-Double-click `index.html`. Chrome or Edge — it uses the Web MIDI API, which
-Firefox and Safari don't support. Plug the keyboard in, then click **Connect MIDI
-device**; if the port won't open, close the DAW (Windows gives one app the port
-at a time).
+**Hosted:** <https://blur6666.github.io/piano-music-theory-sandbox/> — nothing to
+install.
+
+**Locally:** double-click `index.html`. There is no build and no server to start.
+
+Chrome or Edge either way: it uses the Web MIDI API, which Firefox and Safari
+don't support. To play it with hardware, plug the keyboard in, then click
+**Connect MIDI device**; if the port won't open, close the DAW (Windows gives one
+app the port at a time).
 
 ## Using it
 
