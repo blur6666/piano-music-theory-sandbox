@@ -44,6 +44,15 @@
   });
   applyTheme(localStorage.getItem("piano-theme") || SP.config.theme);
 
+  // Two octaves on a phone. 61 keys at 390px are unplayable, and LOW/HIGH are
+  // real knobs -- keyboard-ui derives every width from them -- so narrowing
+  // the range is the entire mobile adaptation. Decided once, here, before
+  // init() builds the keys: no resize listener, nothing rebuilds mid-session.
+  if (window.matchMedia("(max-width: 560px)").matches){
+    SP.config.LOW = 48;    // C3
+    SP.config.HIGH = 72;   // C5
+  }
+
   SP.keyboard.init();
   SP.results.init();
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Keys, Chords &amp; Scales - Piano Sandbox</title>
+<title>Piano Sandbox — Keys, Chords &amp; Scales</title>
 <meta name="description" content="An on-screen 5-octave piano with live chord and scale detection, inversions, degree formulas and diatonic chords — playable with a MIDI keyboard or just the mouse.">
 <meta property="og:title" content="Piano Sandbox — Keys, Chords &amp; Scales">
 <meta property="og:description" content="An on-screen 5-octave piano with live chord and scale detection, inversions, degree formulas and diatonic chords — playable with a MIDI keyboard or just the mouse.">
@@ -61,6 +61,13 @@
     <button id="clearBtn">Clear</button>
   </div>
   <div class="piano-shell"><div id="kb" class="piano-wrap"></div></div>
+  <!-- Narrow screens only; hidden above 560px in style.css. No JS behind it --
+       main.js cuts the range at the same breakpoint and that is the whole of
+       the mobile story. -->
+  <p class="desktop-note">Built for a desktop browser with a MIDI keyboard. On a
+    narrow screen the piano is cut to two octaves (C3&ndash;C5) and the keys are
+    cramped; the full five octaves and hardware input are the intended
+    experience.</p>
   <div class="results">
     <div class="results-col col-left">
       <p class="field-label">Notes</p>

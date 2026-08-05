@@ -11,6 +11,10 @@ chords.
 press-and-hold when momentary, click-to-toggle when latched — so chord and scale
 detection works in full by clicking the on-screen keys.
 
+**Desktop tool.** Chrome or Edge on a real screen. It opens on a phone, but the
+piano drops to two octaves there and the keys are cramped — see the limitations
+at the bottom.
+
 Personal tool. No build step, no dependencies, no backend — just static files.
 
 ## Running it
@@ -89,7 +93,7 @@ notes can be heard. Click **Connect MIDI** once, or click an on-screen key, to
 unlock the audio context.
 
 To add a chord or scale, add a row to `data.js`. To add a view, add a file that
-subscribes to `SP.state`. Details and the reasoning are in `CLAUDE.md`.
+subscribes to `SP.state`. Details and the reasoning are in `AGENTS.md`.
 
 ## Known limitations (deliberate)
 
@@ -97,3 +101,6 @@ subscribes to `SP.state`. Details and the reasoning are in `CLAUDE.md`.
   spelling, so Gb major's 7th shows as B rather than Cb
 - Pentatonic, blues, and whole-tone scales get no diatonic chord chips
 - One MIDI port at a time on Windows
+- Below 560px the keyboard is cut to two octaves (C3–C5) so the layout isn't
+  absurd, and the range is decided once at load — rotating the phone doesn't
+  rebuild it. That is the extent of the mobile support; this is a desktop tool

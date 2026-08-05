@@ -46,6 +46,7 @@ Read the files for what the code does. This section is only for decisions the co
 - **`theory.keyContext` owns all key inference.** Diatonic for a scale, "chords in the key of X" for major/minor-family chords, a **"Possible keys" chip list** for dim/aug/sus/dominant (fixed semitone offsets in `data.AMBIGUOUS_KEYS`, reusing the chip renderer with one candidate key per chip instead of one diatonic chord), else `null`. The `null` cases — power chord, minor major 7, non-7-note scales — have genuinely nothing to show; that is not an oversight. **New key-inference rules go here, not in `results-ui.js`.**
 - **`keyboard-ui.js` repaints in full** from the Set on every change, no bookkeeping. Momentary mouse presses release on `mouseup` **anywhere on the page**, so a cursor that drifts off the key before release can't strand a note on.
 - **Latch** (`config.latch`, off by default) toggles on note-on and ignores note-off; momentary adds on note-on and removes on note-off. Mouse and MIDI share one latch flag, mirrored into each module by `main.js`'s `applyLatch`. Switching modes deliberately leaves lit notes alone. `describeMIDI`'s `noteName()` includes an octave **on purpose** — console only, exempt from the display convention.
+- **Narrow screens get two octaves, decided once at load.** `main.js` sets `config.LOW = 48` / `HIGH = 72` (C3–C5) before `keyboard.init()` when `matchMedia("(max-width: 560px)")` matches; `keyboard-ui.js` derives every width from those knobs, so nothing else changes. **This is honest degradation, not mobile support** — 61 keys at 390px are unplayable, and the `.desktop-note` paragraph in `index.html` (CSS-hidden above 560px, no JS) says so on the page. **Do not add a resize listener or a `ResizeObserver`**: rebuilding the keyboard on rotation, mid-session, with notes possibly held, is worse than not adapting. 560px and 850px are the only two breakpoints; reuse them rather than inventing a third.
 - **Sound** (`config.sound`, `config.sustain`) is synthesized in `audio.js`. Sustain leaves each voice on its natural decay and ignores logical note-off; turning Sustain off releases active voices and makes future note-offs shorten the sound.
 
 ## Testing
@@ -94,6 +95,7 @@ When a change turns up something that wasn't obvious going in — a constraint t
 - Flats toggle is a per-pitch-class table swap, not key-aware spelling. With flats on, every accidental takes its flat name (D#→Eb) from one table indexed by pitch class. Nothing computes a correct letter per scale degree, so Gb major prints its 7th as B (not Cb) and a scale can repeat or skip letters. This is parity with the sharps-only default, not a regression from it — key-correct spelling needs letter+accidental math through `detect`/`diatonic` plus key inference for results that deliberately have no key, and is out of scope.
 - Pentatonic/blues/whole-tone scales get no diatonic chord chips.
 - One MIDI port at a time on Windows — if it won't open, close the DAW.
+- Mobile is two octaves and a notice, nothing more — see the narrow-screen bullet above. Cramped keys under 560px are the accepted outcome, not a bug.
 
 ## Adding things
 

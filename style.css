@@ -392,6 +392,11 @@ h1 {
   user-select: none;
 }
 
+/* Shown only under 560px, where main.js has cut the range to two octaves. */
+.desktop-note {
+  display: none;
+}
+
 .pkey {
   position: absolute;
   top: 0;
@@ -619,6 +624,21 @@ h1 {
 
   .piano-shell {
     border-radius: 15px;
+  }
+
+  /* Two octaves fit the viewport, so drop the 850px scroller minimum and give
+     the shorter keyboard a taller aspect ratio than the 61-key one. */
+  .piano-wrap {
+    min-width: 0;
+    aspect-ratio: 520 / 202;
+  }
+
+  .desktop-note {
+    display: block;
+    margin: 18px 0 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
   }
 
   .chip {
