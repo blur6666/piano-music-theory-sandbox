@@ -1,4 +1,4 @@
-# scale-piano
+# Piano Sandbox
 
 A local music theory study tool. An on-screen 5-octave piano driven by a
 hardware MIDI keyboard, showing live what I'm holding: note names,
