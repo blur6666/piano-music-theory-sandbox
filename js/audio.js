@@ -103,7 +103,6 @@
 
     const now = audio.currentTime;
     const f = frequency(note);
-    console.log("Audio note " + note + " = " + f.toFixed(2) + " Hz");
     const voice = {
       startAt: now,
       stopAt: now + DECAY + VOICE_TAIL,
