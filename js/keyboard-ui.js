@@ -2,7 +2,10 @@
 (function(){
   const C = SP.config, D = SP.data;
   const keyEls = {};   // MIDI note number -> key element
+  const keyList = [];  // stable list for geometry-based hit testing
   const mouseHeld = new Set();   // notes currently down via mouse, momentary mode only
+  const dragTouched = new Set();  // keys already hit in the current mouse drag
+  let mouseDragging = false;
   let latch = C.latch;   // mirrors SP.midi's flag; kept in sync by main.js's applyLatch()
   let flats = C.flats;   // spelling of the key labels only; see the loop in init()
 
@@ -11,10 +14,46 @@
     else { mouseHeld.add(m); SP.state.set(m, true, C.mouseVelocity); }
   }
 
+  function beginDrag(m){
+    mouseDragging = latch;
+    dragTouched.clear();
+    dragTouched.add(m);
+    press(m);
+  }
+
+  function dragInto(m){
+    if (!latch) return;
+    if (!mouseDragging || dragTouched.has(m)) return;
+    dragTouched.add(m);
+    SP.state.set(m, true, C.mouseVelocity);
+  }
+
+  function keyFromPoint(x, y){
+    let whiteHit = null;
+    for (const el of keyList){
+      const r = el.getBoundingClientRect();
+      if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+      if (el.classList.contains("black")) return +el.dataset.note;
+      whiteHit = +el.dataset.note;
+    }
+    return whiteHit;
+  }
+
+  function dragMove(e){
+    if (!mouseDragging) return;
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    const key = hit ? hit.closest(".pkey") : null;
+    const note = key ? +key.dataset.note : keyFromPoint(e.clientX, e.clientY);
+    if (note == null) return;
+    dragInto(note);
+  }
+
   // Bound to window, not the key, so a release anywhere on the page --
   // cursor drifted off the key, or off the page entirely -- still clears
   // it. Otherwise a stray release could strand a note on.
   function releaseHeld(){
+    mouseDragging = false;
+    dragTouched.clear();
     if (latch) return;
     for (const m of mouseHeld) SP.state.set(m, false);
     mouseHeld.clear();
@@ -43,15 +82,23 @@
           el.style.width = (wW * 0.62) + "%";
           el.style.left = (wIdx * wW - wW * 0.31) + "%";
         }
+        el.dataset.note = String(m);
         const lbl = document.createElement("span");
         lbl.textContent = SP.theory.spell(m % 12, flats);
         lbl.className = "klabel";
         el.appendChild(lbl);
-        el.addEventListener("mousedown", () => press(m));
+        el.addEventListener("mousedown", e => {
+          if (e.button !== 0) return;
+          e.preventDefault();
+          beginDrag(m);
+        });
         kb.appendChild(el);
         keyEls[m] = el;
+        keyList.push(el);
       }
+      window.addEventListener("mousemove", dragMove);
       window.addEventListener("mouseup", releaseHeld);
+      window.addEventListener("blur", releaseHeld);
       this.setLabels(C.showLabels);
     },
 
