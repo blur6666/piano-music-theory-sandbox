@@ -9,6 +9,20 @@
     // midi.js's console noteName() is deliberately exempt.
     spell(pc, flats){ return (flats ? D.FLATS : D.NAMES)[pc]; },
 
+    // A pitch as VexFlow names it: letter + accidental + octave, "c#/4".
+    // Takes a MIDI note, not a pitch class -- the staff draws the octave the
+    // player actually struck, unlike the Notes/Degrees panel which folds to
+    // pitch classes. Spelling rides on spell(), so the flats toggle moves the
+    // notehead and not just the label: D# draws on the D line, Eb on the E.
+    //
+    // The octave is safe to derive arithmetically only because FLATS is naive
+    // (one name per pitch class, see AGENTS.md). It never yields Cb or B#, so
+    // the letter can't disagree with the octave number and there is no
+    // wraparound to handle. A key-aware speller would break this line.
+    vexKey(midi, flats){
+      return this.spell(midi % 12, flats).toLowerCase() + "/" + (Math.floor(midi / 12) - 1);
+    },
+
     // One ascending octave of a scale from an actual key on the keyboard:
     // the root the player struck, its scale tones above it, and the root
     // again an octave up to close the run. Takes a MIDI note, not a pitch

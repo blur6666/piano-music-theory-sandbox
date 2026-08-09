@@ -2,8 +2,8 @@
 
 A local music theory study tool. An on-screen 5-octave piano driven by a
 hardware MIDI keyboard, showing live what I'm holding: note names,
-chord/scale detection with inversion, the degree formula, and the diatonic
-chords.
+chord/scale detection with inversion, the degree formula, the diatonic
+chords, and the notes themselves written on a grand staff.
 
 **[Open the live version →](https://blur6666.github.io/piano-music-theory-sandbox/)**
 
@@ -15,7 +15,9 @@ detection works in full by clicking the on-screen keys.
 piano drops to two octaves there and the keys are cramped — see the limitations
 at the bottom.
 
-Personal tool. No build step, no dependencies, no backend — just static files.
+Personal tool. No build step, no backend — just static files. One dependency:
+[VexFlow](https://vexflow.com), pinned, from a CDN `<script>` tag, and only the
+staff needs it. Everything else works with the network off.
 
 ## Running it
 
@@ -47,7 +49,7 @@ app the port at a time).
 
 ## Testing
 
-Open `tests.html` — 61 assertions over `theory.js` and static data, prints a pass/fail tally.
+Open `tests.html` — 69 assertions over `theory.js` and static data, prints a pass/fail tally.
 
 For sound, click **Sound** on, click an on-screen key, then test Sustain on and
 off, latch toggling, chords, MIDI velocity, and the MIDI note-off path from the
@@ -82,6 +84,7 @@ js/
   midi.js         Web MIDI hookup, message decoding, console log
   keyboard-ui.js  builds and repaints the piano
   results-ui.js   renders the detection panel
+  staff.js        draws the grand staff (VexFlow)
   main.js         wires everything together
 ```
 
@@ -101,6 +104,8 @@ subscribes to `SP.state`. Details and the reasoning are in `AGENTS.md`.
   spelling, so Gb major's 7th shows as B rather than Cb
 - Pentatonic, blues, and whole-tone scales get no diatonic chord chips
 - One MIDI port at a time on Windows
+- The staff needs the network, since VexFlow comes from a CDN. Offline, the
+  staff simply doesn't draw and everything else carries on
 - Below 560px the keyboard is cut to two octaves (C3–C5) so the layout isn't
   absurd, and the range is decided once at load — rotating the phone doesn't
   rebuild it. That is the extent of the mobile support; this is a desktop tool

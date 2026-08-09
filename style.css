@@ -462,10 +462,34 @@ h1 {
   min-width: 0;
 }
 
+.col-staff {
+  flex: 0 0 320px;
+  max-width: 320px;
+  padding-right: 28px;
+  border-right: 1px solid var(--border);
+}
+
+/* VexFlow draws black, and draws into paths and rects -- staff lines, clefs,
+   noteheads and accidentals all included. One rule recolours the lot, which
+   beats styling each element from JS. Fill only: stroking the Bravura glyph
+   outlines as well thickens them into mush. */
+#staffOut svg path,
+#staffOut svg rect {
+  fill: var(--text-primary);
+}
+
+/* Paired with the viewBox staff.js sets after drawing: a wide run scales down
+   to the column instead of overflowing it. */
+#staffOut svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 .col-left {
-  flex: 0 0 385px;
-  max-width: 385px;
-  padding-right: 32px;
+  flex: 0 0 300px;
+  max-width: 300px;
+  padding: 0 32px;
   border-right: 1px solid var(--border);
 }
 
@@ -586,12 +610,17 @@ h1 {
     font-size: 10px;
   }
 
+  .col-staff,
   .col-left {
     flex-basis: 100%;
     max-width: none;
     padding: 0 0 28px;
     border-right: 0;
     border-bottom: 1px solid var(--border);
+  }
+
+  .col-left {
+    padding-top: 28px;
   }
 
   .col-right {

@@ -59,9 +59,16 @@
 
   SP.keyboard.init();
   SP.results.init();
+  SP.staff.init();
 
   SP.state.subscribe(sel => SP.keyboard.repaint(sel));
   SP.state.subscribe(sel => SP.results.render(sel));
+  // Last on purpose, and it has to stay last. notify() is a plain forEach, so
+  // a listener that throws stops the ones queued behind it -- and the staff is
+  // the only view that can throw, since it is the only one with a dependency
+  // that might not have loaded. Last, a dead CDN costs the staff and nothing
+  // else. First, it would take the keyboard and the detection panel with it.
+  SP.state.subscribe(sel => SP.staff.render(sel));
   SP.state.subscribeInput((note, on, velocity) => SP.audio.handle(note, on, velocity));
 
   document.getElementById("addMidiBtn").addEventListener("click", () => {
@@ -153,6 +160,7 @@
   function applyFlats(){
     SP.keyboard.setFlats(flatsOn);
     SP.results.setFlats(flatsOn);
+    SP.staff.setFlats(flatsOn);
     flatsToggle.checked = !flatsOn;
     SP.state.notify();   // re-render the held chord in the new spelling immediately
   }
