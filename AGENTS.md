@@ -5,7 +5,8 @@ Local music theory study tool: on-screen 5-octave piano driven by a MIDI keyboar
 ## Hard constraints
 
 - **KISS.** No support beyond the owner's use case: Desktop Windows PC. No resilience, no graceful degradation, no edge-case armor. He tinkers and fixes breakage himself.
-- **Must work opened straight from the filesystem.** Double-clicking `index.html` has to keep working. That requirement is what forces plain `<script>` tags and one global `SP` instead of ES modules — `import` doesn't load over `file://`. It is a floor, not a ceiling: a static copy is also published to GitHub Pages, which adds no build step, no dependency, and no change to the module strategy. The hosted copy is served from a **subpath** (`/piano-music-theory-sandbox/`), so every asset path stays relative — an absolute path rooted at `/` works on `file://` and breaks there.
+- **Served over HTTP, not opened off the filesystem.** GitHub Pages is the way this app is used; `python -m http.server` is the way it is developed. **Double-clicking `index.html` is no longer a requirement** — it was one for most of this project's life, and a lot of the reasoning below was shaped by it. The hosted copy is served from a **subpath** (`/piano-music-theory-sandbox/`), so every asset path stays relative; an absolute path rooted at `/` breaks there.
+- **Still no build step, and still one global `SP`.** This used to be forced — `import` doesn't load over `file://` — and is now simply chosen. Nothing is installed, nothing is generated, and the file you edit is the file the browser runs. That is worth more here than module scoping, so **plain `<script>` tags and `SP` stay**. Dropping `file://` bought the freedom to use ES modules; it is not a reason to. Bundlers and npm remain out of scope on their own merits.
 - **Synthesized audio.** Notes use the browser Web Audio API; there are no external audio assets.
 - **Display conventions** (user-specified): note names without octave numbers, deduplicated to pitch classes; intervals as proper names ("major 3rd"), never W/H or semitone counts; chords show inversion text.
 
@@ -23,7 +24,7 @@ tests.html  assertions on theory    js/state.js        selection Set + subscribe
                                     js/main.js         wires everything together
 ```
 
-**Plain `<script>` tags at the end of `<body>`, one global `SP`. NOT ES modules** — `import` doesn't load over `file://`. `data.js` declares `var SP = {}`; every other file is an IIFE attaching to it. Wrong order fails loudly, which is what you want.
+**Plain `<script>` tags at the end of `<body>`, one global `SP`. NOT ES modules** — a deliberate choice now that `file://` no longer forces it; see Hard constraints. `data.js` declares `var SP = {}`; every other file is an IIFE attaching to it. Wrong order fails loudly, which is what you want.
 
 **`main.js` is the only file that runs anything on load** — everything else just defines. That is what lets `tests.html` load `data.js` + `theory.js` alone.
 
@@ -75,17 +76,19 @@ SP.midi.onMIDI({data:[0x80,60,0]});     // note off C4
 
 ### Agent page viewing
 
-Chrome automation blocks `file://` URLs. To inspect UI/CSS and avoid hallucinations, serve temporarily:
+Serve it and look at it. Don't reason about the UI from the source:
 
 ```
 python -m http.server 8731 --bind 127.0.0.1
 ```
 
-(Note: this harness is a viewing convenience, not a dependency — the app still opens by double-click. It doubles as the way to check the GitHub Pages copy, since serving from a subdirectory reproduces the subpath the hosted version runs under.)
+This is now simply how the app runs, not a workaround — and it reproduces the subpath the GitHub Pages copy is served from. Chrome automation also refuses `file://` URLs, so serving was always the route for an agent to see the page.
+
+Headless Chrome over CDP is enough to drive it with no browser tooling installed: launch with `--headless=new --remote-debugging-port=9222`, read the target list from `http://127.0.0.1:9222/json/list`, and talk to it with Node's built-in `WebSocket`. `Runtime.evaluate` against `SP.state.replace([...])` sets up any chord or scale without synthesising clicks, and `Page.captureScreenshot` with a `clip` from `getBoundingClientRect()` crops to one panel. **Measure, don't squint** — read positions out of the DOM and assert on them; see the notehead-bounding-box trap above for what eyeballing costs.
 
 ### Before debugging a dead control: suspect the cache
 
-**Chrome caches `file://` scripts per file and will serve a stale `js/` file next to freshly-loaded ones.** Cost an hour once — a new button rendered from an updated `index.html` while `main.js` came from cache, so the element existed with no listener and every click did nothing. The code was correct throughout.
+**Chrome will serve a stale `js/` file next to freshly-loaded ones.** Cost an hour once — a new button rendered from an updated `index.html` while `main.js` came from cache, so the element existed with no listener and every click did nothing. The code was correct throughout. This bit hardest under `file://`, where Chrome caches per file and ignores a plain reload; over `http://` it is rarer but not gone, so the drill below still stands.
 
 Symptoms: a control that renders but does nothing; a function that behaves like an older version; edits that "don't take" while others in the same commit did.
 
