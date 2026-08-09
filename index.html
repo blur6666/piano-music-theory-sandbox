@@ -69,6 +69,10 @@
     cramped; the full five octaves and hardware input are the intended
     experience.</p>
   <div class="results">
+    <div class="results-col col-staff">
+      <p class="field-label">Staff</p>
+      <div id="staffOut"></div>
+    </div>
     <div class="results-col col-left">
       <p class="field-label">Notes</p>
       <p id="notesOut" class="field-value">&mdash;</p>
@@ -88,6 +92,11 @@
     </div>
   </div>
 </div>
+<!-- The one third-party dependency, and the only thing here that needs the
+     network. Version is pinned deliberately: an unpinned CDN URL is a silent
+     breakage waiting on someone else's release. Nothing else in the app cares
+     if this fails to load -- see the subscribe order in main.js. -->
+<script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
 <!-- Dependency order matters. data.js creates SP; main.js is the only file
      that runs anything. Keep these at the end of <body> so the DOM exists. -->
 <script src="js/data.js"></script>
@@ -97,6 +106,7 @@
 <script src="js/midi.js"></script>
 <script src="js/keyboard-ui.js"></script>
 <script src="js/results-ui.js"></script>
+<script src="js/staff.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

@@ -226,6 +226,21 @@ li .got{display:block;color:var(--text-muted);font-size:13px;}
      T.diatonic(6, SP.data.MAJOR_IV, true).map(c => c.name).join(" "),
      "Gb Abm Bbm B Db Ebm F°");
 
+  // vexKey() -- the staff view's pitch format. Takes a MIDI note, so unlike
+  // the rest of the panel it carries a real octave.
+  eq("middle C is c/4", T.vexKey(60, false), "c/4");
+  eq("the lowest key on the board", T.vexKey(36, false), "c/2");
+  eq("the highest key on the board", T.vexKey(96, false), "c/7");
+  // B3 -> C4 is where an off-by-one octave bug would surface: both notes sit
+  // in the same MIDI dozen only if you round the wrong way.
+  eq("B below middle C stays in octave 3", T.vexKey(59, false), "b/3");
+  eq("and its neighbour a semitone up is octave 4", T.vexKey(60, false), "c/4");
+  // The point of routing through spell(): the toggle moves the notehead to a
+  // different line, it does not just relabel the same one.
+  eq("D#4 with sharps sits on the D line", T.vexKey(63, false), "d#/4");
+  eq("the same key with flats sits on the E line", T.vexKey(63, true), "eb/4");
+  eq("flats spell the black key above F as Gb", T.vexKey(66, true), "gb/4");
+
   const tally = document.getElementById("tally");
   tally.textContent = fail ? fail + " failed, " + pass + " passed" : "all " + pass + " passed";
   tally.className = fail ? "bad" : "ok";

@@ -1,6 +1,16 @@
 # Plan: grand staff view
 
-Status: approved, in progress on branch `staff-view`.
+Status: **implemented** on branch `staff-view`. Kept as the record of why the
+change looks the way it does; the durable rules it turned up have been moved into
+`AGENTS.md`, which is where they belong.
+
+Two things the plan did not predict, both now in `AGENTS.md`: VexFlow only draws
+what is in its `Factory` render queue, so notes built with a bare `new StaveNote`
+lay out correctly and then never appear; and its formatter will not compress
+noteheads below a minimum width, so a wide set overflows its own SVG instead of
+shrinking. A third cost an hour and was not a bug at all — VexFlow puts the
+accidental inside the notehead group, so measuring that group's bounding box
+makes every flat look a line too high.
 
 ## Why
 
