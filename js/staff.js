@@ -47,6 +47,24 @@
     return [buildNote(factory, midis, clef)];
   }
 
+  // A spread run that crosses middle C needs both staves to agree on which
+  // column each note occupies. VexFlow aligns voices by tick and both voices
+  // start at tick 0, so left to themselves the treble notes stack on top of
+  // the bass ones instead of following them -- a scale from C3 draws its top
+  // C in the same column as its bottom one. A ghost note is an invisible
+  // tickable that holds a voice's place: the job an engraver gives a rest.
+  // Only needed when both staves are occupied; one staff alone has nothing to
+  // stay in step with.
+  function buildCrossing(factory, arr){
+    const treble = [], bass = [];
+    for (const m of arr){
+      const up = m >= SPLIT;
+      treble.push(up ? buildNote(factory, [m], "treble") : factory.GhostNote({ duration: DURATION }));
+      bass.push(up ? factory.GhostNote({ duration: DURATION }) : buildNote(factory, [m], "bass"));
+    }
+    return { treble: treble, bass: bass };
+  }
+
   // Soft mode, and no time signature anywhere. An eight-note scale of whole
   // notes is thirty-two beats; there is no meter here to be honest about, so
   // the alternative is picking a fake one and fighting it.
@@ -85,8 +103,10 @@
       // Draw at whatever width the notes actually need. VexFlow's formatter
       // refuses to squeeze noteheads below a minimum, so a chromatic run asked
       // to fit 290px silently overflows its own SVG instead. Widen here, then
-      // let the viewBox below scale the result back into the column.
-      const cols = spread ? Math.max(treble.length, bass.length) : 1;
+      // let the viewBox below scale the result back into the column. Every
+      // note gets its own column when spread, including across the two staves
+      // -- counting per-staff would under-measure a run that crosses.
+      const cols = spread ? arr.length : 1;
       const width = Math.max(MIN_WIDTH, CLEF_ROOM + cols * COL);
 
       const factory = new Vex.Flow.Factory({
@@ -96,8 +116,14 @@
       // is simply clipped away if they start at the edge.
       const system = factory.System({ x: 22, y: 25, width: width - 34, spaceBetweenStaves: 11 });
 
-      system.addStave(staveFor(factory, buildNotes(factory, treble, "treble", spread))).addClef("treble");
-      system.addStave(staveFor(factory, buildNotes(factory, bass, "bass", spread))).addClef("bass");
+      const crossing = spread && treble.length && bass.length;
+      const notes = crossing ? buildCrossing(factory, arr) : {
+        treble: buildNotes(factory, treble, "treble", spread),
+        bass: buildNotes(factory, bass, "bass", spread)
+      };
+
+      system.addStave(staveFor(factory, notes.treble)).addClef("treble");
+      system.addStave(staveFor(factory, notes.bass)).addClef("bass");
       system.addConnector("brace");
       system.addConnector("singleLeft");
 
