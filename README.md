@@ -24,7 +24,15 @@ staff needs it. Everything else works with the network off.
 **Hosted:** <https://blur6666.github.io/piano-music-theory-sandbox/> — nothing to
 install.
 
-**Locally:** double-click `index.html`. There is no build and no server to start.
+**Locally:** serve the folder and open it — there is still no build step.
+
+```
+python -m http.server 8731 --bind 127.0.0.1
+```
+
+then <http://127.0.0.1:8731>. Opening `index.html` directly off disk mostly
+works but isn't supported any more, and it reproduces neither the subpath the
+hosted copy runs under nor its caching behaviour.
 
 Chrome or Edge either way: it uses the Web MIDI API, which Firefox and Safari
 don't support. To play it with hardware, plug the keyboard in, then click
@@ -56,9 +64,9 @@ off, latch toggling, chords, MIDI velocity, and the MIDI note-off path from the
 console. Click **Connect MIDI** before using hardware so Chrome can unlock the
 audio context.
 
-**When editing, disable the cache.** Chrome caches `file://` scripts per file and
-will serve a stale `js/` file next to freshly-loaded ones — a control that
-renders but does nothing is almost always this, not the code. Open DevTools (F12)
+**When editing, disable the cache.** Chrome will serve a stale `js/` file next to
+freshly-loaded ones — a control that renders but does nothing is almost always
+this, not the code. Open DevTools (F12)
 → Network tab → tick "Disable cache", and leave DevTools open while you work. It
 applies to all requests while open, so ordinary reloads fetch fresh and you stop
 thinking about it. Fallback if something still looks stale: Ctrl+Shift+R.
@@ -88,8 +96,10 @@ js/
   main.js         wires everything together
 ```
 
-Plain `<script>` tags sharing one global `SP`, not ES modules — `import` doesn't
-work over `file://`, and this has to open by double-clicking.
+Plain `<script>` tags sharing one global `SP`, not ES modules. That started out
+forced — `import` doesn't work over `file://`, and the app used to open by
+double-clicking — and is now just the choice: no build step, and the file I edit
+is the file the browser runs.
 
 Sound uses the browser's Web Audio API and needs a user interaction before MIDI
 notes can be heard. Click **Connect MIDI** once, or click an on-screen key, to
